@@ -518,7 +518,7 @@
     }
     
     .food-item-name p {
-        font-size: 18px;
+        font-size: 19px;
     }
     
     .food-item-stats {
@@ -566,21 +566,43 @@
     }
 
     .food-item.compact .title {
-        font-size: 1rem;
+        font-size: 16px;
+    }
+
+    .food-item.compact .title-portion {
+        font-size: 12px;
     }
 
     .food-item.compact .title-description {
-        font-size: 0.75rem;
+        font-size: 13px;
         -webkit-line-clamp: 2;
         line-clamp: 2;
     }
 
     .food-item.compact .price-now {
-        font-size: 1.05rem;
+        font-size: 17px;
     }
 
     .food-item.compact .read-more-btn {
         font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .food-item-name p {
+        font-size: 18px;
+    }
+
+    .food-item.compact .title {
+        font-size: 15px;
+    }
+
+    .food-item.compact .title-description {
+        font-size: 12px;
+    }
+
+    .food-item.compact .price-now {
+        font-size: 16px;
     }
 }
 

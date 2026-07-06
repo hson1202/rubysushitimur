@@ -565,13 +565,13 @@
   }
 
   .product-header h2 {
-    font-size: 1.5rem;
+    font-size: 22px;
     line-height: 1.25;
     margin-bottom: 6px;
   }
 
   .product-description {
-    font-size: 0.95rem;
+    font-size: 15px;
     line-height: 1.65;
     margin-top: 6px;
   }
@@ -709,11 +709,11 @@
   }
 
   .product-header h2 {
-    font-size: 1.45rem;
+    font-size: 19px;
   }
 
   .product-description {
-    font-size: 0.95rem;
+    font-size: 15px;
     line-height: 1.65;
   }
 

@@ -605,6 +605,11 @@
         flex: 1;
         text-align: center;
     }
+
+    .item-name,
+    .details-item-name {
+        font-size: 14px;
+    }
 }
 
 @media (max-width: 480px) {
