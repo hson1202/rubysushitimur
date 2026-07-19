@@ -394,7 +394,7 @@ export const sendAdminReservationNotification = async (reservation) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: adminEmails.join(', '),
+      to: adminEmails,
       subject: `📅 New Reservation - ${reservation.customerName} - ${branding.name}`,
       html: generateAdminReservationNotificationHTML(reservation, branding),
       text: generateAdminReservationNotificationText(reservation, branding)
@@ -510,7 +510,7 @@ export const sendAdminNotification = async (contactMessage) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: adminEmails.join(', '),
+      to: adminEmails,
       subject: `📬 Message #${contactMessage.messageNumber || contactMessage._id.toString().slice(-6)} - ${contactMessage.subject.toUpperCase()} - ${branding.name}`,
       html: generateAdminNotificationEmailHTML(contactMessage, branding),
       text: generateAdminNotificationEmailText(contactMessage, branding)
@@ -630,7 +630,7 @@ export const sendAdminOrderNotification = async (order) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: adminEmails.join(', '),
+      to: adminEmails,
       subject: `Đơn hàng mới #${order.trackingCode} - ${order.customerInfo.name}`,
       html: await generateAdminOrderNotificationEmailHTML(order, branding),
       text: await generateAdminOrderNotificationEmailText(order, branding)

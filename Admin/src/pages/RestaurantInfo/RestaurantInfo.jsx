@@ -374,36 +374,37 @@ const RestaurantInfo = ({ url }) => {
             <div className="form-group">
               <label>{t('ri.notificationEmails')}</label>
               <small className="field-hint">{t('ri.notificationEmailsHelp')}</small>
-              <div className="notification-email-list">
+              <div className="notification-email-box">
                 {formData.notificationEmails.length === 0 ? (
                   <p className="notification-email-empty">{t('ri.notificationEmailsEmpty')}</p>
                 ) : (
-                  formData.notificationEmails.map((email) => (
-                    <div key={email} className="notification-email-chip">
-                      <span>{email}</span>
-                      <button
-                        type="button"
-                        className="notification-email-remove"
-                        onClick={() => removeNotificationEmail(email)}
-                        aria-label={t('ri.notificationEmailRemove')}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))
+                  <ul className="notification-email-list">
+                    {formData.notificationEmails.map((email) => (
+                      <li key={email} className="notification-email-row">
+                        <span className="notification-email-text">{email}</span>
+                        <button
+                          type="button"
+                          className="btn-remove-email"
+                          onClick={() => removeNotificationEmail(email)}
+                        >
+                          {t('ri.notificationEmailRemove')}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </div>
-              <div className="notification-email-add">
-                <input
-                  type="email"
-                  value={newNotificationEmail}
-                  onChange={(e) => setNewNotificationEmail(e.target.value)}
-                  onKeyDown={handleNotificationEmailKeyDown}
-                  placeholder="orders@example.com"
-                />
-                <button type="button" className="btn-add-email" onClick={addNotificationEmail}>
-                  {t('ri.notificationEmailAdd')}
-                </button>
+                <div className="notification-email-add">
+                  <input
+                    type="email"
+                    value={newNotificationEmail}
+                    onChange={(e) => setNewNotificationEmail(e.target.value)}
+                    onKeyDown={handleNotificationEmailKeyDown}
+                    placeholder="orders@example.com"
+                  />
+                  <button type="button" className="btn-add-email" onClick={addNotificationEmail}>
+                    {t('ri.notificationEmailAdd')}
+                  </button>
+                </div>
               </div>
             </div>
 

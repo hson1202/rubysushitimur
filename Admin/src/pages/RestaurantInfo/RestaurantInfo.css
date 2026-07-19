@@ -159,77 +159,101 @@
   margin-bottom: 0.75rem;
 }
 
+.notification-email-box {
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-sm, 8px);
+  background: #f9fafb;
+  overflow: hidden;
+}
+
 .notification-email-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-height: 2.5rem;
-  margin-bottom: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .notification-email-empty {
   margin: 0;
-  color: #888;
-  font-size: 0.9rem;
+  padding: 0.875rem 1rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.notification-email-chip {
-  display: inline-flex;
+.notification-email-row {
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.65rem;
-  background: #fff5f5;
-  border: 1px solid #ffd0d0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #333;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.notification-email-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
+.notification-email-text {
+  font-size: 0.95rem;
+  color: #374151;
+  word-break: break-all;
+}
+
+.btn-remove-email {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  background: #fee2e2;
+  color: #dc2626;
   border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #c44;
-  font-size: 1.1rem;
-  line-height: 1;
+  border-radius: var(--radius-sm, 8px);
   cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
-.notification-email-remove:hover {
-  background: rgba(204, 68, 68, 0.12);
+.btn-remove-email:hover {
+  background: #fecaca;
 }
 
 .notification-email-add {
   display: flex;
-  gap: 0.75rem;
-  align-items: stretch;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
 }
 
 .notification-email-add input {
   flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
 .btn-add-email {
-  padding: 0.75rem 1.25rem;
-  background-color: #FF6B6B;
-  color: white;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary, #FF6B6B);
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
-  min-height: 44px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-add-email:hover {
-  background-color: #ee5a5a;
+  background: var(--color-primary-hover, #ee5a5a);
+}
+
+@media (max-width: 480px) {
+  .notification-email-add {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-add-email {
+    width: 100%;
+  }
 }
 
 .form-row {
