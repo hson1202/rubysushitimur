@@ -46,6 +46,12 @@ const restaurantInfoSchema = new mongoose.Schema(
       default: ""
     },
 
+    // Admin emails that receive new-order / contact / reservation alerts
+    notificationEmails: {
+      type: [String],
+      default: []
+    },
+
     // Address
     address: {
       type: String,

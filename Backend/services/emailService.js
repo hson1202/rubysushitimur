@@ -32,6 +32,34 @@ const getRestaurantBranding = async () => {
 
 const getSupportEmail = () => process.env.SUPPORT_EMAIL || process.env.ADMIN_EMAIL || ''
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
+
+const normalizeEmailList = (emails) => {
+  if (!emails) return []
+  const list = Array.isArray(emails) ? emails : String(emails).split(/[,;]+/)
+  return [...new Set(
+    list
+      .map((e) => String(e).trim().toLowerCase())
+      .filter((e) => EMAIL_RE.test(e))
+  )]
+}
+
+/**
+ * Recipients for admin alerts (new order / contact / reservation).
+ * Uses Restaurant Info notificationEmails from admin UI, plus ADMIN_EMAIL / EMAIL_USER fallback.
+ */
+const getAdminNotificationEmails = async () => {
+  let fromDb = []
+  try {
+    const info = await RestaurantInfo.getSingleton()
+    fromDb = normalizeEmailList(info.notificationEmails)
+  } catch {
+    // ignore — fall back to env
+  }
+  const fromEnv = normalizeEmailList(process.env.ADMIN_EMAIL || process.env.EMAIL_USER || '')
+  return [...new Set([...fromDb, ...fromEnv])]
+}
+
 const getSupportLine = (lang = 'en') => {
   const email = getSupportEmail()
   if (!email) return { html: '', text: '' }
@@ -341,13 +369,13 @@ export const sendReservationConfirmation = async (reservation) => {
 // Send admin notification for new reservation
 export const sendAdminReservationNotification = async (reservation) => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER
+    const adminEmails = await getAdminNotificationEmails()
 
-    if (!adminEmail) {
-      console.error('❌ Admin reservation notification not sent: ADMIN_EMAIL not configured')
+    if (!adminEmails.length) {
+      console.error('❌ Admin reservation notification not sent: no notification emails configured')
       return {
         success: false,
-        message: 'Admin reservation notification not sent (ADMIN_EMAIL not configured)'
+        message: 'Admin reservation notification not sent (no notification emails configured)'
       }
     }
 
@@ -366,7 +394,7 @@ export const sendAdminReservationNotification = async (reservation) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: adminEmail,
+      to: adminEmails.join(', '),
       subject: `📅 New Reservation - ${reservation.customerName} - ${branding.name}`,
       html: generateAdminReservationNotificationHTML(reservation, branding),
       text: generateAdminReservationNotificationText(reservation, branding)
@@ -374,7 +402,7 @@ export const sendAdminReservationNotification = async (reservation) => {
 
     const result = await transporter.sendMail(mailOptions)
     console.log('✅ Admin reservation notification email sent successfully:', result.messageId)
-    console.log(`   To: ${adminEmail}`)
+    console.log(`   To: ${adminEmails.join(', ')}`)
     console.log(`   From: ${reservation.customerName} (${reservation.email})`)
     return { success: true, messageId: result.messageId }
 
@@ -470,10 +498,19 @@ export const sendAdminNotification = async (contactMessage) => {
     }
     
     const branding = await getRestaurantBranding()
+    const adminEmails = await getAdminNotificationEmails()
+
+    if (!adminEmails.length) {
+      console.error('❌ Admin notification not sent: no notification emails configured')
+      return {
+        success: false,
+        message: 'Admin notification not sent (no notification emails configured)'
+      }
+    }
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      to: adminEmails.join(', '),
       subject: `📬 Message #${contactMessage.messageNumber || contactMessage._id.toString().slice(-6)} - ${contactMessage.subject.toUpperCase()} - ${branding.name}`,
       html: generateAdminNotificationEmailHTML(contactMessage, branding),
       text: generateAdminNotificationEmailText(contactMessage, branding)
@@ -481,6 +518,7 @@ export const sendAdminNotification = async (contactMessage) => {
     
     const result = await transporter.sendMail(mailOptions)
     console.log('✅ Admin notification email sent successfully:', result.messageId)
+    console.log(`   To: ${adminEmails.join(', ')}`)
     return { success: true, messageId: result.messageId }
     
   } catch (error) {
@@ -560,20 +598,19 @@ export const sendOrderConfirmation = async (order) => {
 // Send admin notification for new order
 export const sendAdminOrderNotification = async (order) => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER
+    const adminEmails = await getAdminNotificationEmails()
     
-    // Kiểm tra xem có email admin không
-    if (!adminEmail) {
-      console.error('❌ Admin order notification not sent: ADMIN_EMAIL not configured');
-      console.error('   Please set ADMIN_EMAIL in .env file');
+    if (!adminEmails.length) {
+      console.error('❌ Admin order notification not sent: no notification emails configured');
+      console.error('   Add emails in Admin → Restaurant Info, or set ADMIN_EMAIL in .env');
       return { 
         success: false, 
         messageId: 'no_admin_email',
-        message: 'Admin order notification not sent (ADMIN_EMAIL not configured)'
+        message: 'Admin order notification not sent (no notification emails configured)'
       }
     }
     
-    console.log(`📧 Preparing to send admin order notification to: ${adminEmail}`);
+    console.log(`📧 Preparing to send admin order notification to: ${adminEmails.join(', ')}`);
     console.log(`   Order ID: ${order._id}, Tracking Code: ${order.trackingCode}`);
     
     const transporter = createTransporter()
@@ -593,17 +630,17 @@ export const sendAdminOrderNotification = async (order) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: adminEmail,
+      to: adminEmails.join(', '),
       subject: `Đơn hàng mới #${order.trackingCode} - ${order.customerInfo.name}`,
       html: await generateAdminOrderNotificationEmailHTML(order, branding),
       text: await generateAdminOrderNotificationEmailText(order, branding)
     }
     
-    console.log(`📤 Sending admin order notification email to: ${adminEmail}`);
+    console.log(`📤 Sending admin order notification email to: ${adminEmails.join(', ')}`);
     const result = await transporter.sendMail(mailOptions)
     console.log('✅ Admin order notification email sent successfully!');
     console.log(`   Message ID: ${result.messageId}`);
-    console.log(`   To: ${adminEmail}`);
+    console.log(`   To: ${adminEmails.join(', ')}`);
     console.log(`   Order: #${order.trackingCode}`);
     return { success: true, messageId: result.messageId }
     

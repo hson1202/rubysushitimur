@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken"
 import RestaurantInfo from "../models/restaurantInfoModel.js"
 import {
   normalizeWeeklyHours,
@@ -5,6 +6,25 @@ import {
   validateWeeklyHours,
   formatOpeningHoursLegacy
 } from "../utils/restaurantHours.js"
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
+
+const normalizeNotificationEmails = (emails) => {
+  if (emails === undefined) return null
+  const list = Array.isArray(emails)
+    ? emails
+    : String(emails ?? "").split(/[,;\s]+/)
+  const cleaned = [...new Set(
+    list
+      .map((e) => String(e).trim().toLowerCase())
+      .filter(Boolean)
+  )]
+  const invalid = cleaned.filter((e) => !EMAIL_RE.test(e))
+  if (invalid.length) {
+    return { error: `Email không hợp lệ: ${invalid.join(", ")}` }
+  }
+  return { emails: cleaned }
+}
 
 const ensureWeeklyHours = async (info) => {
   const normalized = normalizeWeeklyHours(info.weeklyHours)
@@ -20,12 +40,29 @@ const ensureWeeklyHours = async (info) => {
   return info
 }
 
-// Get restaurant information (public)
+// Get restaurant information (public; notificationEmails only for admin)
 const getRestaurantInfo = async (req, res) => {
   try {
     const info = await RestaurantInfo.getSingleton()
     await ensureWeeklyHours(info)
-    return res.json({ success: true, data: info })
+    const data = info.toObject()
+
+    // Hide staff notification list from public website consumers
+    const token = req.headers.token
+    let isAdmin = false
+    if (token && process.env.JWT_SECRET) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        isAdmin = decoded?.role === "admin"
+      } catch {
+        isAdmin = false
+      }
+    }
+    if (!isAdmin) {
+      delete data.notificationEmails
+    }
+
+    return res.json({ success: true, data })
   } catch (error) {
     console.error("Error fetching restaurant info:", error)
     return res.status(500).json({
@@ -48,6 +85,7 @@ const updateRestaurantInfo = async (req, res) => {
       foundingYear,
       phone,
       email,
+      notificationEmails,
       address,
       openingHours,
       weeklyHours,
@@ -68,6 +106,13 @@ const updateRestaurantInfo = async (req, res) => {
     if (foundingYear !== undefined) updates.foundingYear = foundingYear
     if (phone !== undefined) updates.phone = phone
     if (email !== undefined) updates.email = email
+    if (notificationEmails !== undefined) {
+      const normalized = normalizeNotificationEmails(notificationEmails)
+      if (normalized.error) {
+        return res.status(400).json({ success: false, message: normalized.error })
+      }
+      updates.notificationEmails = normalized.emails
+    }
     if (address !== undefined) updates.address = address
     if (socialMedia !== undefined) updates.socialMedia = socialMedia
     if (googleMapsUrl !== undefined) updates.googleMapsUrl = googleMapsUrl
@@ -124,6 +169,7 @@ const resetToDefaults = async (req, res) => {
     info.foundingYear = ""
     info.phone = ""
     info.email = ""
+    info.notificationEmails = []
     info.address = ""
     info.openingHours = { weekdays: legacy.weekdays, sunday: legacy.sunday }
     info.weeklyHours = defaultHours

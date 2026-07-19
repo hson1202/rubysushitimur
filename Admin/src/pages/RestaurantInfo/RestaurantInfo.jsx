@@ -54,6 +54,7 @@ const RestaurantInfo = ({ url }) => {
     foundingYear: '',
     phone: '',
     email: '',
+    notificationEmails: [],
     address: '',
     openingHours: { weekdays: '', sunday: '' },
     weeklyHours: getDefaultWeeklyHours(),
@@ -66,6 +67,7 @@ const RestaurantInfo = ({ url }) => {
       hu: emptyTranslation()
     }
   });
+  const [newNotificationEmail, setNewNotificationEmail] = useState('');
 
   useEffect(() => {
     fetchRestaurantInfo();
@@ -74,7 +76,9 @@ const RestaurantInfo = ({ url }) => {
   const fetchRestaurantInfo = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${url}/api/restaurant-info`);
+      const response = await axios.get(`${url}/api/restaurant-info`, {
+        headers: { token: localStorage.getItem('adminToken') || '' }
+      });
       if (response.data.success) {
         const d = response.data.data;
         setInfo(d);
@@ -89,6 +93,7 @@ const RestaurantInfo = ({ url }) => {
           foundingYear: d.foundingYear || '',
           phone: d.phone || '',
           email: d.email || '',
+          notificationEmails: Array.isArray(d.notificationEmails) ? d.notificationEmails : [],
           address: d.address || '',
           openingHours: {
             weekdays: d.openingHours?.weekdays || '',
@@ -154,6 +159,40 @@ const RestaurantInfo = ({ url }) => {
       weeklyHours[dayIndex] = { ...weeklyHours[dayIndex], [field]: value };
       return { ...prev, weeklyHours };
     });
+  };
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(String(value).trim());
+
+  const addNotificationEmail = () => {
+    const email = newNotificationEmail.trim().toLowerCase();
+    if (!email) return;
+    if (!isValidEmail(email)) {
+      toast.error(t('ri.notificationEmailInvalid'));
+      return;
+    }
+    if (formData.notificationEmails.includes(email)) {
+      toast.error(t('ri.notificationEmailExists'));
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      notificationEmails: [...prev.notificationEmails, email]
+    }));
+    setNewNotificationEmail('');
+  };
+
+  const removeNotificationEmail = (email) => {
+    setFormData(prev => ({
+      ...prev,
+      notificationEmails: prev.notificationEmails.filter((e) => e !== email)
+    }));
+  };
+
+  const handleNotificationEmailKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addNotificationEmail();
+    }
   };
 
   const validateWeeklyHours = () => {
@@ -329,6 +368,42 @@ const RestaurantInfo = ({ url }) => {
                 <label>{t('ri.email')}</label>
                 <input type="email" name="email" value={formData.email}
                   onChange={handleInputChange} placeholder="info@restaurant.com" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>{t('ri.notificationEmails')}</label>
+              <small className="field-hint">{t('ri.notificationEmailsHelp')}</small>
+              <div className="notification-email-list">
+                {formData.notificationEmails.length === 0 ? (
+                  <p className="notification-email-empty">{t('ri.notificationEmailsEmpty')}</p>
+                ) : (
+                  formData.notificationEmails.map((email) => (
+                    <div key={email} className="notification-email-chip">
+                      <span>{email}</span>
+                      <button
+                        type="button"
+                        className="notification-email-remove"
+                        onClick={() => removeNotificationEmail(email)}
+                        aria-label={t('ri.notificationEmailRemove')}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="notification-email-add">
+                <input
+                  type="email"
+                  value={newNotificationEmail}
+                  onChange={(e) => setNewNotificationEmail(e.target.value)}
+                  onKeyDown={handleNotificationEmailKeyDown}
+                  placeholder="orders@example.com"
+                />
+                <button type="button" className="btn-add-email" onClick={addNotificationEmail}>
+                  {t('ri.notificationEmailAdd')}
+                </button>
               </div>
             </div>
 
