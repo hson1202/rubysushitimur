@@ -26,6 +26,8 @@ const PlaceOrder = () => {
   })
   const [orderType, setOrderType] = useState(isAuthenticated ? 'registered' : 'guest');
   const [fulfillmentType, setFulfillmentType] = useState('delivery');
+  // Hiện tại chỉ nhận tiền mặt - thẻ hiển thị nhưng bị khóa (chưa khả dụng)
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [orderSuccessData, setOrderSuccessData] = useState({});
@@ -373,6 +375,7 @@ const PlaceOrder = () => {
       customerInfo: customerInfo,
       orderType: isAuthenticated ? 'registered' : 'guest',
       fulfillmentType: fulfillmentType,
+      paymentMethod: paymentMethod,
       language: i18n.language || 'hu',
       note: data.note || '',
       preferredDeliveryTime: data.preferredDeliveryTime || '',
@@ -700,7 +703,6 @@ const PlaceOrder = () => {
             <div className="fulfillment-type-options">
               {[
                 { value: 'pickup', title: t('placeOrder.fulfillment.pickupTitle'), desc: t('placeOrder.fulfillment.pickupDesc') },
-                { value: 'dinein', title: t('placeOrder.fulfillment.dineInTitle'), desc: t('placeOrder.fulfillment.dineInDesc') },
                 { value: 'delivery', title: t('placeOrder.fulfillment.deliveryTitle'), desc: t('placeOrder.fulfillment.deliveryDesc') },
               ].map((option) => (
                 <label key={option.value} className={`fulfillment-card ${fulfillmentType === option.value ? 'active' : ''}`}>
@@ -733,6 +735,39 @@ const PlaceOrder = () => {
                   </div>
                 </label>
               ))}
+            </div>
+          </div>
+
+          {/* Payment Method Selection - hiện chỉ nhận tiền mặt, thẻ chưa khả dụng */}
+          <div className="payment-method-section">
+            <h3>{t('placeOrder.payment.title')}</h3>
+            <div className="payment-method-options">
+              <label className={`fulfillment-card ${paymentMethod === 'cash' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cash"
+                  checked={paymentMethod === 'cash'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                />
+                <div className="fulfillment-text">
+                  <span className="fulfillment-title">{t('placeOrder.payment.cash')}</span>
+                  <span className="fulfillment-desc">{t('placeOrder.payment.cashDesc')}</span>
+                </div>
+              </label>
+              <label className="fulfillment-card payment-card-disabled">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="card"
+                  checked={false}
+                  disabled
+                />
+                <div className="fulfillment-text">
+                  <span className="fulfillment-title">{t('placeOrder.payment.card')}</span>
+                  <span className="fulfillment-desc">{t('placeOrder.payment.cardUnavailable')}</span>
+                </div>
+              </label>
             </div>
           </div>
 

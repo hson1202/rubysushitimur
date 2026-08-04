@@ -20,6 +20,8 @@ const orderSchema = new mongoose.Schema({
     status: { type: String, default: "Pending" },
     date: { type: Date, default: Date.now() },
     payment: { type: Boolean, default: false },
+    // Hiện chỉ nhận 'cash' - 'card' để sẵn cho tương lai khi mở thanh toán thẻ
+    paymentMethod: { type: String, enum: ['cash', 'card'], default: 'cash' },
     
     // Thông tin bổ sung
     orderType: { type: String, enum: ['guest', 'registered'], default: 'guest' },

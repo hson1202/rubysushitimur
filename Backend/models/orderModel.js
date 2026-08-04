@@ -20,6 +20,8 @@ const orderSchema = new mongoose.Schema({
     status: { type: String, default: "Pending" },
     date: { type: Date, default: Date.now() },
     payment: { type: Boolean, default: false },
+    // Hiện chỉ nhận 'cash' - 'card' để sẵn cho tương lai khi mở thanh toán thẻ
+    paymentMethod: { type: String, enum: ['cash', 'card'], default: 'cash' },
     
     // Thông tin bổ sung
     orderType: { type: String, enum: ['guest', 'registered'], default: 'guest' },
@@ -42,25 +44,30 @@ const orderSchema = new mongoose.Schema({
     timestamps: true
 })
 
+// Tạo mã 8 ký tự: 2 chữ cái + 6 số (ví dụ: AB123456)
+const generateTrackingCode = () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    let code = '';
+
+    for (let i = 0; i < 2; i++) {
+        code += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+
+    for (let i = 0; i < 6; i++) {
+        code += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+
+    return code;
+};
+
+// Cho phép controller sinh lại mã khi gặp lỗi trùng (E11000)
+orderSchema.statics.generateTrackingCode = generateTrackingCode;
+
 // Tạo mã dò đơn hàng tự động
 orderSchema.pre('save', function(next) {
     if (!this.trackingCode) {
-        // Tạo mã 8 ký tự: 2 chữ cái + 6 số
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const numbers = '0123456789';
-        let code = '';
-        
-        // 2 chữ cái đầu
-        for (let i = 0; i < 2; i++) {
-            code += letters.charAt(Math.floor(Math.random() * letters.length));
-        }
-        
-        // 6 số tiếp theo
-        for (let i = 0; i < 6; i++) {
-            code += numbers.charAt(Math.floor(Math.random() * numbers.length));
-        }
-        
-        this.trackingCode = code;
+        this.trackingCode = generateTrackingCode();
     }
     next();
 });

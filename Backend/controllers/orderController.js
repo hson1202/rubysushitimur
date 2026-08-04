@@ -13,10 +13,14 @@ const HU_ZIPCODE_REGEX = /^\d{4}$/;
 // placing user order from frontend (hỗ trợ cả đăng nhập và không đăng nhập)
 const placeOrder = async (req, res) => {
     try {
-        const { userId, items, amount, address, customerInfo, orderType = 'guest', fulfillmentType = 'delivery' } = req.body;
-        const allowedFulfillmentTypes = ['delivery', 'pickup', 'dinein'];
+        const { userId, items, amount, address, customerInfo, orderType = 'guest', fulfillmentType = 'delivery', paymentMethod = 'cash' } = req.body;
+        // 'dinein' đã bỏ khỏi UI đặt hàng - đơn cũ trong DB vẫn giữ giá trị này để hiển thị
+        const allowedFulfillmentTypes = ['delivery', 'pickup'];
         const normalizedFulfillmentType = allowedFulfillmentTypes.includes(fulfillmentType) ? fulfillmentType : 'delivery';
         const isDelivery = normalizedFulfillmentType === 'delivery';
+        // Hiện chỉ nhận tiền mặt - khi mở thanh toán thẻ thì thêm 'card' vào allowlist
+        const allowedPaymentMethods = ['cash'];
+        const normalizedPaymentMethod = allowedPaymentMethods.includes(paymentMethod) ? paymentMethod : 'cash';
 
         console.log('📦 Placing order with userId:', userId, 'orderType:', orderType, 'fulfillmentType:', normalizedFulfillmentType);
 
@@ -235,13 +239,34 @@ const placeOrder = async (req, res) => {
             fulfillmentType: normalizedFulfillmentType,
             language: req.body.language || 'vi', // Lưu ngôn ngữ khách hàng dùng khi đặt đơn
             payment: true, // COD - thanh toán khi nhận hàng
+            paymentMethod: normalizedPaymentMethod,
             status: "Pending",
             deliveryInfo: normalizedDeliveryInfo, // Lưu thông tin delivery (zone, distance, deliveryFee, systemFee, estimatedTime)
             note: req.body.note || "",
             preferredDeliveryTime: req.body.preferredDeliveryTime || ""
         })
 
-        await newOrder.save();
+        // Lưu đơn với retry khi trùng trackingCode (E11000):
+        // mã sinh ngẫu nhiên nên hiếm khi trùng với đơn cũ, nhưng nếu trùng
+        // thì sinh mã mới và lưu lại thay vì trả lỗi cho khách
+        const MAX_TRACKING_CODE_RETRIES = 5;
+        for (let attempt = 1; ; attempt++) {
+            try {
+                await newOrder.save();
+                break;
+            } catch (saveError) {
+                const isTrackingCodeCollision =
+                    saveError?.code === 11000 &&
+                    (saveError.keyPattern?.trackingCode || saveError.message?.includes('trackingCode'));
+
+                if (!isTrackingCodeCollision || attempt >= MAX_TRACKING_CODE_RETRIES) {
+                    throw saveError;
+                }
+
+                console.log(`⚠️ Tracking code collision (${newOrder.trackingCode}), regenerating... (attempt ${attempt}/${MAX_TRACKING_CODE_RETRIES})`);
+                newOrder.trackingCode = orderModel.generateTrackingCode();
+            }
+        }
 
         console.log(`✅ Order created successfully with ID: ${newOrder._id}, userId: ${validUserId}`);
         // Emit internal event for realtime admin updates

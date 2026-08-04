@@ -6,10 +6,14 @@ import eventBus from "../services/eventBus.js"
 // placing user order from frontend (hỗ trợ cả đăng nhập và không đăng nhập)
 const placeOrder = async (req,res) => {
     try {
-        const { userId, items, amount, address, customerInfo, orderType = 'guest', fulfillmentType = 'delivery' } = req.body;
-        const allowedFulfillmentTypes = ['delivery', 'pickup', 'dinein'];
+        const { userId, items, amount, address, customerInfo, orderType = 'guest', fulfillmentType = 'delivery', paymentMethod = 'cash' } = req.body;
+        // 'dinein' đã bỏ khỏi UI đặt hàng - đơn cũ trong DB vẫn giữ giá trị này để hiển thị
+        const allowedFulfillmentTypes = ['delivery', 'pickup'];
         const normalizedFulfillmentType = allowedFulfillmentTypes.includes(fulfillmentType) ? fulfillmentType : 'delivery';
         const isDelivery = normalizedFulfillmentType === 'delivery';
+        // Hiện chỉ nhận tiền mặt - khi mở thanh toán thẻ thì thêm 'card' vào allowlist
+        const allowedPaymentMethods = ['cash'];
+        const normalizedPaymentMethod = allowedPaymentMethods.includes(paymentMethod) ? paymentMethod : 'cash';
         
         console.log('📦 Placing order with userId:', userId, 'orderType:', orderType, 'fulfillmentType:', normalizedFulfillmentType);
         
@@ -85,6 +89,7 @@ const placeOrder = async (req,res) => {
             fulfillmentType: normalizedFulfillmentType,
             language: req.body.language || 'vi', // Lưu ngôn ngữ khách hàng dùng khi đặt đơn
             payment: true, // COD - thanh toán khi nhận hàng
+            paymentMethod: normalizedPaymentMethod,
             status: "Pending",
             deliveryInfo: isDelivery ? (deliveryInfo || null) : null, // Lưu thông tin delivery (zone, distance, deliveryFee, estimatedTime)
             note: req.body.note || "",
