@@ -15,6 +15,9 @@ const createInitialEditForm = () => ({
   nameEN: '',
   nameHU: '',
   description: '',
+  descriptionVI: '',
+  descriptionEN: '',
+  descriptionHU: '',
   price: '',
   category: '',
   quantity: 0,
@@ -109,6 +112,9 @@ const Products = ({ url }) => {
     nameHU: '',
     slug: '',
     description: '',
+    descriptionVI: '',
+    descriptionEN: '',
+    descriptionHU: '',
     price: '',
     category: '',
     image: null,
@@ -160,6 +166,9 @@ const Products = ({ url }) => {
       nameEN: product.nameEN || '',
       nameHU: product.nameHU || '',
       description: product.description || '',
+      descriptionVI: product.descriptionVI || '',
+      descriptionEN: product.descriptionEN || '',
+      descriptionHU: product.descriptionHU || '',
       price: product.price ?? '',
       category: product.category || '',
       quantity: Number.isFinite(Number(product.quantity)) ? Number(product.quantity) : 0,
@@ -756,7 +765,10 @@ const handleQuickEditCancel = () => {
       formData.append('nameEN', newProduct.nameEN)
       formData.append('nameHU', newProduct.nameHU)
       formData.append('slug', newProduct.slug)
-      formData.append('description', newProduct.description)
+      formData.append('description', newProduct.descriptionHU || newProduct.description)
+      formData.append('descriptionVI', newProduct.descriptionVI || '')
+      formData.append('descriptionEN', newProduct.descriptionEN || '')
+      formData.append('descriptionHU', newProduct.descriptionHU || newProduct.description || '')
             formData.append('category', newProduct.category)
             formData.append('price', String(Number(newProduct.price)));
             formData.append('quantity', String(Number(newProduct.quantity) || 0));
@@ -843,6 +855,9 @@ const handleQuickEditCancel = () => {
           nameHU: '',
           slug: '',
           description: '',
+          descriptionVI: '',
+          descriptionEN: '',
+          descriptionHU: '',
           price: '',
           category: '',
           image: null,
@@ -1253,18 +1268,36 @@ const handleQuickEditCancel = () => {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label htmlFor="description">{t('products.description', { defaultValue: 'Description' })}</label>
+                        <label htmlFor="descriptionHU">{t('products.descriptionHU', { defaultValue: 'Description (Hungarian)' })}</label>
                         <textarea
-                          id="description"
-                          value={newProduct.description}
-                          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                          id="descriptionHU"
+                          value={newProduct.descriptionHU}
+                          onChange={(e) => setNewProduct({ ...newProduct, descriptionHU: e.target.value, description: e.target.value })}
                           placeholder={t('products.descriptionPlaceholder', 'Enter product description')}
                           rows="3"
                         />
                       </div>
+                      <div className="form-group">
+                        <label htmlFor="descriptionEN">{t('products.descriptionEN', { defaultValue: 'Description (English)' })}</label>
+                        <textarea
+                          id="descriptionEN"
+                          value={newProduct.descriptionEN}
+                          onChange={(e) => setNewProduct({ ...newProduct, descriptionEN: e.target.value })}
+                          placeholder={t('products.descriptionEN')}
+                          rows="3"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="descriptionVI">{t('products.descriptionVI', { defaultValue: 'Description (Vietnamese)' })}</label>
+                        <textarea
+                          id="descriptionVI"
+                          value={newProduct.descriptionVI}
+                          onChange={(e) => setNewProduct({ ...newProduct, descriptionVI: e.target.value })}
+                          placeholder={t('products.descriptionVI')}
+                          rows="3"
+                        />
+                      </div>
                     </div>
-            
-
 
             <div className="form-row">
               <div className="form-group">

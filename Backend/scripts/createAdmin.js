@@ -5,37 +5,47 @@ import userModel from '../models/userModel.js';
 
 dotenv.config();
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@gmail.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin';
+
+if (!ADMIN_PASSWORD) {
+  throw new Error('ADMIN_PASSWORD is not set');
+}
+
 const createAdmin = async () => {
   try {
-    // Connect to MongoDB
-    const mongoUrl = process.env.MONGODB_URL || "mongodb+srv://vietbowlssala:Vietbowls777@vietbow.twz9q4t.mongodb.net/?retryWrites=true&w=majority&appName=VietBow";
-    await mongoose.connect(mongoUrl);
-    console.log('Connected to MongoDB');
-
-    // Check if admin already exists
-    const existingAdmin = await userModel.findOne({ email: 'admin@example.com' });
-    if (existingAdmin) {
-      console.log('Admin user already exists!');
-      process.exit(0);
+    const mongoUrl = process.env.MONGODB_URL || process.env.MONGODB_URI;
+    if (!mongoUrl) {
+      throw new Error('MONGODB_URL is not set');
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash('admin123', saltRounds);
+    const dbName = process.env.MONGODB_DBNAME;
+    await mongoose.connect(mongoUrl, dbName ? { dbName } : {});
+    console.log('Connected to MongoDB');
 
-    // Create admin user
-    const adminUser = new userModel({
-      name: 'Admin',
-      email: 'admin@example.com',
-      password: hashedPassword,
-      role: 'admin',
-      status: 'active'
-    });
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    const existingUser = await userModel.findOne({ email: ADMIN_EMAIL });
 
-    await adminUser.save();
-    console.log('Admin user created successfully!');
-    console.log('Email: admin@example.com');
-    console.log('Password: admin123');
+    if (existingUser) {
+      existingUser.password = hashedPassword;
+      existingUser.role = 'admin';
+      existingUser.status = 'active';
+      existingUser.name = existingUser.name || ADMIN_NAME;
+      await existingUser.save();
+      console.log('Admin user updated successfully!');
+    } else {
+      await userModel.create({
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
+        password: hashedPassword,
+        role: 'admin',
+        status: 'active'
+      });
+      console.log('Admin user created successfully!');
+    }
+
+    console.log(`Email: ${ADMIN_EMAIL}`);
 
   } catch (error) {
     console.error('Error creating admin user:', error);

@@ -1,33 +1,37 @@
 import foodModel from "../models/foodModel.js";
 import fs from "fs";
+import { mapAllergenCodes } from "../utils/allergens.js";
 
 // Parse allergens from FormData. Accepts a JSON array string (e.g. '["gluten","fish"]')
-// or a comma-separated string (e.g. "gluten, fish") for backwards compatibility with import scripts.
+// or a comma-separated string (e.g. "a, c" / "gluten, fish"). Letter codes are case-insensitive.
 const parseAllergens = (value, fallback = []) => {
   if (value === undefined || value === null) return fallback;
+  let tokens = [];
   if (Array.isArray(value)) {
-    return value.map((a) => String(a).trim()).filter(Boolean);
-  }
-  if (typeof value === "string") {
+    tokens = value.map((a) => String(a).trim()).filter(Boolean);
+  } else if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return [];
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        return parsed.map((a) => String(a).trim()).filter(Boolean);
+        tokens = parsed.map((a) => String(a).trim()).filter(Boolean);
+      } else {
+        tokens = trimmed.split(",").map((a) => a.trim()).filter(Boolean);
       }
     } catch (e) {
-      // Not JSON — treat as comma-separated string
+      tokens = trimmed.split(",").map((a) => a.trim()).filter(Boolean);
     }
-    return trimmed.split(",").map((a) => a.trim()).filter(Boolean);
+  } else {
+    return fallback;
   }
-  return fallback;
+  return mapAllergenCodes(tokens);
 };
 
 const addFood = async (req, res) => {
   try {
     const {
-      sku, name, description, price, category,
+      sku, name, description, descriptionVI, descriptionEN, descriptionHU, price, category,
       nameVI, nameEN, nameHU,
       isPromotion, promotionPrice,
       soldCount, quantity, slug, options, disableBoxFee,
@@ -109,7 +113,10 @@ const addFood = async (req, res) => {
       nameHU: nameHU?.trim(),
       // Only set slug if provided, otherwise let model generate it
       ...(slug?.trim() && { slug: slug.trim() }),
-      description: description?.trim() || "",
+      description: description?.trim() || descriptionHU?.trim() || "",
+      descriptionVI: descriptionVI?.trim() || "",
+      descriptionEN: descriptionEN?.trim() || "",
+      descriptionHU: descriptionHU?.trim() || description?.trim() || "",
       price: Number(price),
       category: category.trim(),
       image: image_url,
@@ -238,6 +245,7 @@ const listFood = async (req, res) => {
       const rx = new RegExp(search, 'i')
       filter.$or = [
         { name: rx }, { nameVI: rx }, { nameEN: rx }, { nameHU: rx },
+        { description: rx }, { descriptionVI: rx }, { descriptionEN: rx }, { descriptionHU: rx },
         { category: rx }, { sku: rx }
       ]
     }
@@ -359,7 +367,7 @@ const updateFood = async (req, res) => {
   try {
     const { id } = req.params
     const {
-      sku, name, description, price, category,
+      sku, name, description, descriptionVI, descriptionEN, descriptionHU, price, category,
       nameVI, nameEN, nameHU,
       isPromotion, promotionPrice,
       soldCount, quantity, slug, options, disableBoxFee,
@@ -460,6 +468,15 @@ const updateFood = async (req, res) => {
       description: hasField('description')
         ? (description?.trim() || "")
         : existingFood.description,
+      descriptionVI: hasField('descriptionVI')
+        ? (descriptionVI?.trim() || "")
+        : existingFood.descriptionVI,
+      descriptionEN: hasField('descriptionEN')
+        ? (descriptionEN?.trim() || "")
+        : existingFood.descriptionEN,
+      descriptionHU: hasField('descriptionHU')
+        ? (descriptionHU?.trim() || "")
+        : existingFood.descriptionHU,
       price: Number(priceValue),
       category: categoryValue.trim(),
       quantity: Number(quantityValue),

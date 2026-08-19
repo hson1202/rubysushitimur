@@ -138,7 +138,6 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-userSchema.index({ email: 1 });
 userSchema.index({ 'addresses._id': 1 });
 
 // Middleware to ensure only one default address per user

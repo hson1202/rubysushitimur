@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "Import Allergens - EU 14 (HU)",
+    "description": "Nhập 14 dị ứng EU (mã A–N) vào MongoDB.\n\nCÁCH DÙNG:\n1. Import collection này vào Postman\n2. Set environment variable baseUrl = http://localhost:4000\n3. Chạy request '1. Import All 14 Allergens (BULK)'\n4. Chạy '2. GET All Allergens' để kiểm tra",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Import All 14 Allergens (BULK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"allergens\": [\n    { \"code\": \"A\", \"nameHU\": \"Glutén\" },\n    { \"code\": \"B\", \"nameHU\": \"Rákfélék\" },\n    { \"code\": \"C\", \"nameHU\": \"Tojás\" },\n    { \"code\": \"D\", \"nameHU\": \"Hal\" },\n    { \"code\": \"E\", \"nameHU\": \"Földimogyoró\" },\n    { \"code\": \"F\", \"nameHU\": \"Szója\" },\n    { \"code\": \"G\", \"nameHU\": \"Tej\" },\n    { \"code\": \"H\", \"nameHU\": \"Diófélék\" },\n    { \"code\": \"I\", \"nameHU\": \"Zeller\" },\n    { \"code\": \"J\", \"nameHU\": \"Mustár\" },\n    { \"code\": \"K\", \"nameHU\": \"Szezámmag\" },\n    { \"code\": \"L\", \"nameHU\": \"Szulfitok\" },\n    { \"code\": \"M\", \"nameHU\": \"Csillagfürt\" },\n    { \"code\": \"N\", \"nameHU\": \"Puhatestűek\" }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/allergen/bulk",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "allergen", "bulk"]
+        }
+      }
+    },
+    {
+      "name": "2. GET All Allergens",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/allergen",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "allergen"]
+        }
+      }
+    },
+    {
+      "name": "3. Add One Allergen (optional)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"A\",\n  \"nameHU\": \"Glutén\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/allergen",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "allergen"]
+        }
+      }
+    }
+  ]
+}

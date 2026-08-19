@@ -89,7 +89,6 @@ contactMessageSchema.pre('save', async function(next) {
 })
 
 // Index for better query performance
-contactMessageSchema.index({ messageNumber: 1 }, { unique: true })
 contactMessageSchema.index({ status: 1, createdAt: -1 })
 contactMessageSchema.index({ subject: 1, status: 1 })
 contactMessageSchema.index({ email: 1 })

@@ -6,13 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { isFoodAvailable, getAvailabilityStatus } from '../../utils/timeUtils'
 import { normalizeAllergens, getAllergenInfo } from '../../utils/allergens'
 import { formatHuf } from '../../utils/currency'
-import { formatProductDisplayName, getDisplayDescription } from '../../utils/productDisplay'
+import { formatProductDisplayName, getLocalizedDescription } from '../../utils/productDisplay'
 import LazyImage from '../LazyImage/LazyImage'
 import { useInViewOnce } from '../../hooks/useIntersectionObserver'
 
 const FOOD_ITEM_IN_VIEW_OPTIONS = { rootMargin: '60px' }
 
-const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, image, sku, isPromotion, originalPrice, promotionPrice, soldCount = 0, likes = 0, options, portion, allergens, onViewDetails, compact = false, availableFrom, availableTo, dailyAvailability, weeklySchedule}) => {
+const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descriptionVI, descriptionEN, descriptionHU, image, sku, isPromotion, originalPrice, promotionPrice, soldCount = 0, likes = 0, options, portion, allergens, onViewDetails, compact = false, availableFrom, availableTo, dailyAvailability, weeklySchedule}) => {
   const {cartItems, addToCart, removeFromCart, url} = useContext(StoreContext);
   const { i18n, t } = useTranslation();
   
@@ -120,7 +120,12 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, image, 
 
   const localizedName = getLocalizedName();
   const displayName = formatProductDisplayName({ sku }, localizedName);
-  const displayDescription = getDisplayDescription(description);
+  const displayDescription = getLocalizedDescription({
+    description,
+    descriptionVI,
+    descriptionEN,
+    descriptionHU,
+  }, currentLanguage);
 
   const openDetail = useCallback(() => {
     if (!onViewDetails) return;
@@ -131,6 +136,9 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, image, 
       nameEN,
       nameHU,
       description,
+      descriptionVI,
+      descriptionEN,
+      descriptionHU,
       price,
       image,
       sku,
@@ -145,7 +153,7 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, image, 
       status: 'active',
       language: 'vi'
     });
-  }, [id, name, nameVI, nameEN, nameHU, description, price, image, sku, isPromotion, originalPrice, promotionPrice, soldCount, likes, options, portion, allergens, onViewDetails]);
+  }, [id, name, nameVI, nameEN, nameHU, description, descriptionVI, descriptionEN, descriptionHU, price, image, sku, isPromotion, originalPrice, promotionPrice, soldCount, likes, options, portion, allergens, onViewDetails]);
 
   const titleRef = useRef(null);
   const descriptionRef = useRef(null);

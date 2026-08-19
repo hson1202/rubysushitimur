@@ -1,0 +1,198 @@
+Danh mục,Mã,Tên món,Mã dị ứng,Giá tiền (Ft)
+Khai Vị & Ăn Nhẹ,01,Tavaszi tekercs (2db) / Spring roll (2pcs),"a, c",1590
+Khai Vị & Ăn Nhẹ,02A,Nyári Tekercs: Csirke avokádó (2db) / Summer roll: Chicken avocado,e,1590
+Khai Vị & Ăn Nhẹ,02E,Nyári Tekercs: Garnélarák (2db) / Summer roll: Shrimp,b,1690
+Khai Vị & Ăn Nhẹ,03,Zöldséges tavaszi tekercs (kicsi) (6db) / Vegetables spring roll (small),a,1490
+Khai Vị & Ăn Nhẹ,04,Panírozott rák (5db) / Tempura Shrimp (5pcs),"a, b",2190
+Khai Vị & Ăn Nhẹ,05,Gőzölt rákos Dimsum (5db) / Steamed shrimp Dimsum (5pcs),"a, b",2190
+Khai Vị & Ăn Nhẹ,06,Sült sertés Dimsum (5db) / Fried pork Dimsum (5pcs),a,1790
+Khai Vị & Ăn Nhẹ,07,Vegetáriánus sült Dimsum (5db) / Vegetarian fried Dimsum (5pcs),a,1690
+Khai Vị & Ăn Nhẹ,08,Hal pogácsa (5db) / Fish cake (5pcs),d,2490
+Khai Vị & Ăn Nhẹ,09,Rák pogácsa (5db) / Shrimp cake (5pcs),b,2690
+Khai Vị & Ăn Nhẹ,10,"Rák tempura perzselt lazaccal, teriyaki szósz, rák kaviár (5db)","a, b, d, k, f",3990
+Khai Vị & Ăn Nhẹ,11,Főtt edamame szója bab / Edamame soy beans,h,1290
+Khai Vị & Ăn Nhẹ,16,Kim chi,,1490
+Khai Vị & Ăn Nhẹ,17,Rántott lazac / Tempura salmon,"a, c, d",2690
+Khai Vị & Ăn Nhẹ,18,Rántott csirkemell / Tempura chicken,"a, c",1990
+Khai Vị & Ăn Nhẹ,19,Rántott avokádó / Tempura avocado,"a, c",1690
+Khai Vị & Ăn Nhẹ,20,Sült burgonya / Fried potatoes,,1490
+Súp,12A,Miso Japán Leves: Tofu / Miso Japanese soup: Tofu,"f, e, a",1490
+Súp,12E,Miso Japán Leves: Garnélarák / Miso Japanese soup: Shrimp,"b, a",1690
+Súp,13,Tom yum (Shrimp squid milk coconut milk lemongrass...),"b, g, a",1990
+Súp,14,Dumpling leves / Dumpling soup,"b, a",2290
+Súp,15,Tojásleves / Trứng gà chần,c,990
+Súp,22,Ruby special leves / Ruby special soup,"a, b, c",3990
+Salad,SA,Mangó Saláta: Zöldségek / Vegetarian salad,"f, e",1990
+Salad,SB,Mangó Saláta: Marha / Beef salad,e,2490
+Salad,SC,Mangó Saláta: Csirke / Chicken salad,e,2490
+Salad,SD,Mangó Saláta: Sült csirke / Fried chicken salad,"a, e",2990
+Salad,SE,Mangó Saláta: Garnélarák / Shrimp salad,"b, e",2790
+Salad,SF,Mangó Saláta: Sült Kacsa / Fried Duck salad,"a, e",2990
+Salad,S1,Avokádó Saláta: Surimi,"b, a, k",1890
+Salad,S2,Avokádó Saláta: Lazac / Salmon,"d, a, k",2690
+Salad,S3,Avokádó Saláta: Tonhal / Tuna,"d, a, k",2790
+Salad,S4,Avokádó Saláta: Tempura rák / Tempura shrimp,"a, b, k",2690
+Salad,S5,Wakame saláta / Wakame salad,,1190
+Phở - Ramen - Udon,20A,Pho Special,"b, c",2690 / 3290
+Phở - Ramen - Udon,20B,Pho Marha / Pho Beef,,2690 / 3290
+Phở - Ramen - Udon,20C,Pho Csirke / Pho Chicken,,2590 / 3090
+Phở - Ramen - Udon,20D,Pho Sült csirke / Pho Fried chicken,a,2690 / 3290
+Phở - Ramen - Udon,20E,Pho Garnélarák / Pho Shrimp,b,2690 / 3590
+Phở - Ramen - Udon,20F,Pho Sült Kacsa / Pho fried Duck,a,2690 / 3590
+Phở - Ramen - Udon,21A,Ramen: Tofu,"a, c, f",3190
+Phở - Ramen - Udon,21B,Ramen: Marha / Beef,"a, c",3690
+Phở - Ramen - Udon,21C,Ramen: Csirke / Chicken,"a, c",3490
+Phở - Ramen - Udon,21E,Ramen: Tenger gyümölcseivel / Seafood,"a, b, c",3990
+Phở - Ramen - Udon,21S,Ramen: Sertés / Pork,"a, c",3690
+Phở - Ramen - Udon,23A,Udon Leves: Tofu,"a, f",3290
+Phở - Ramen - Udon,23B,Udon Leves: Marha / Beef,a,3890
+Phở - Ramen - Udon,23C,Udon Leves: Csirke / Chicken,a,3690
+Phở - Ramen - Udon,23E,Udon Leves: Garnélarák / Shrimp,"a, b",3990
+Phở - Ramen - Udon,23G,"Udon Leves: Vegyes (beef, chicken, shrimp, surimi)","a, b",4290
+Bún - Mì - Pad Thai,P2,Bún nem,"a, c, d, e",3290
+Bún - Mì - Pad Thai,P3,Bún Bò Nam Bộ,"a, d, e",3490
+Bún - Mì - Pad Thai,P4,Bún Chả,"a, d, e",3290
+Bún - Mì - Pad Thai,P5,Bún Bò Huế,a,3290
+Bún - Mì - Pad Thai,P1A,Pad Thai: Zöldségek & Tofu / Vegetarian,"a, f, c, e",2890
+Bún - Mì - Pad Thai,P1B,Pad Thai: Marha / Beef,"a, c, e",3290
+Bún - Mì - Pad Thai,P1C,Pad Thai: Csirke / Chicken,,3090
+Bún - Mì - Pad Thai,P1D,Pad Thai: Sült csirke / Fried chicken,"a, c, e",3590
+Bún - Mì - Pad Thai,P1E,Pad Thai: Garnélarák / Shrimp,"a, b, c, e",3590
+Bún - Mì - Pad Thai,P1F,Pad Thai: Sült kacsa / Fried duck,"a, c, e",3990
+Bún - Mì - Pad Thai,P1K,Pad Thai: Panírozott lazac / Tempura salmon,"a, c, e",4590
+Bún - Mì - Pad Thai,P8A,Ruby Udon: Tofu,"a, b, f",3290
+Bún - Mì - Pad Thai,P8B,Ruby Udon: Marha / Beef,"a, b, f",3890
+Bún - Mì - Pad Thai,P8C,Ruby Udon: Csirke / Chicken,"a, b, f",3690
+Bún - Mì - Pad Thai,P8D,Ruby Udon: Sült Csirke / Fried chicken,"a, b, f",3990
+Bún - Mì - Pad Thai,P8E,Ruby Udon: Garnélarák / Shrimp,"a, b, f",3990
+Bún - Mì - Pad Thai,P8F,Ruby Udon: Sült Kacsa / Fried Duck,"a, b, f",4290
+Bún - Mì - Pad Thai,P8K,Ruby Udon: Panírozott lazac / Tempura salmon,"a, b, d, f",4590
+Bún - Mì - Pad Thai,40A,Pirított Tészta: Zöldségek & Tofu / Fried Noodle: Vegetarian,"a, c, f",2890
+Bún - Mì - Pad Thai,40B,Pirított Tészta: Marha / Beef,"a, c",3290
+Bún - Mì - Pad Thai,40C,Pirított Tészta: Csirke / Chicken,"a, c",3090
+Bún - Mì - Pad Thai,40D,Pirított Tészta: Sült csirke / Fried chicken,"a, c",3490
+Bún - Mì - Pad Thai,40E,Pirított Tészta: Garnélarák / Shrimp,"a, b, c",3490
+Bún - Mì - Pad Thai,40F,Pirított Tészta: Sült kacsa / Fried duck,"a, c",3990
+Các Món Cơm,P6,Teriyaki csirke / Teriyaki chicken,a,3490
+Các Món Cơm,P7,Kyodon,a,3890
+Các Món Cơm,50A,Sült Rizs: Zöldségek & Tofu / Fried Rice: Vegetarian,"a, c, f",2990
+Các Món Cơm,50B,Sült Rizs: Marha / Beef,"a, c",3290
+Các Món Cơm,50C,Sült Rizs: Csirke / Chicken,"a, c",3090
+Các Món Cơm,50D,Sült Rizs: Sült csirke / Fried chicken,"a, c",3590
+Các Món Cơm,50E,Sült Rizs: Garnélarák / Shrimp,"a, b, c",3590
+Các Món Cơm,50F,Sült Rizs: Sült kacsa / Fried duck,"a, c",3990
+Các Món Cơm,50K,Sült Rizs: Panírozott lazac / Tempura salmon,"a, c, d",4590
+Các Món Cơm,60A,Curry: Zöldségek & Tofu / Vegetarian,"a, f, g",2990
+Các Món Cơm,60B,Curry: Marha / Beef,"a, g",3290
+Các Món Cơm,60C,Curry: Csirke / Chicken,"a, g",3290
+Các Món Cơm,60D,Curry: Sült csirke / Fried chicken,"a, g",3590
+Các Món Cơm,60E,Curry: Garnélarák / Shrimp,"a, b, g",3590
+Các Món Cơm,60F,Curry: Sült kacsa / Fried duck,"a, g",3990
+Các Món Cơm,70A,Édes-Savanyú Szószos Rizs: Zöldségek & Tofu,"a, f",2990
+Các Món Cơm,70B,Édes-Savanyú Szószos Rizs: Marha,a,3290
+Các Món Cơm,70C,Édes-Savanyú Szószos Rizs: Csirke,a,3290
+Các Món Cơm,70D,Édes-Savanyú Szószos Rizs: Sült csirke,a,3590
+Các Món Cơm,70E,Édes-Savanyú Szószos Rizs: Garnélarák,"a, b",3590
+Các Món Cơm,70F,Édes-Savanyú Szószos Rizs: Sült kacsa,a,3990
+Các Món Cơm,80A,Mogyoró Szószos Rizs: Zöldségek & Tofu,"a, f, g",2990
+Các Món Cơm,80B,Mogyoró Szószos Rizs: Marha,"a, e, g",3590
+Các Món Cơm,80C,Mogyoró Szószos Rizs: Csirke,"a, e, g",3290
+Các Món Cơm,80D,Mogyoró Szószos Rizs: Sült csirke,"a, e, g",3590
+Các Món Cơm,80E,Mogyoró Szószos Rizs: Garnélarák,"a, b, e, g",3590
+Các Món Cơm,80F,Mogyoró Szószos Rizs: Sült kacsa,"a, e, g",3990
+Các Món Cơm,90A,Hoisin Szószos Rizs: Zöldségek & Tofu,"a, f",2990
+Các Món Cơm,90B,Hoisin Szószos Rizs: Marha,"a, f",3290
+Các Món Cơm,90C,Hoisin Szószos Rizs: Csirke,"a, f",3290
+Các Món Cơm,90D,Hoisin Szószos Rizs: Sült csirke,"a, f",3590
+Các Món Cơm,90E,Hoisin Szószos Rizs: Garnélarák,"a, b, f",3590
+Các Món Cơm,90F,Hoisin Szószos Rizs: Sült kacsa,"a, f",3990
+Các Món Cơm,100A,Thai Csípős Szószos Rizs: Tofu,"a, f",3290
+Các Món Cơm,100B,Thai Csípős Szószos Rizs: Marha,a,3890
+Các Món Cơm,100C,Thai Csípős Szószos Rizs: Csirke,a,3690
+Các Món Cơm,100D,Thai Csípős Szószos Rizs: Sült csirke,a,3990
+Các Món Cơm,100E,Thai Csípős Szószos Rizs: Garnélarák,"a, b",3990
+Các Món Cơm,100F,Thai Csípős Szószos Rizs: Sült kacsa,a,4290
+Các Món Cơm,100K,Thai Csípős Szószos Rizs: Panírozott lazac,"a, d",4590
+Các Món Cơm,110A,Thai Csípős Sült Rizs: Tofu,"a, c, h, f",3290
+Các Món Cơm,110B,Thai Csípős Sült Rizs: Marha,"a, c, h",3890
+Các Món Cơm,110C,Thai Csípős Sült Rizs: Csirke,"a, c, h",3690
+Các Món Cơm,110D,Thai Csípős Sült Rizs: Sült Csirke,"a, c, h",3990
+Các Món Cơm,110E,Thai Csípős Sült Rizs: Garnélarák,"a, b, c, h",3990
+Các Món Cơm,110F,Thai Csípős Sült Rizs: Sült Kacsa,"a, c, h",4290
+Các Món Cơm,110K,Thai Csípős Sült Rizs: Panírozott lazac,"a, c, d, h",4590
+Các Món Cơm,38A,Zöld Curry Rizzsel: Tofu,"a, f, g",3290
+Các Món Cơm,38B,Zöld Curry Rizzsel: Marha,"a, g",3890
+Các Món Cơm,38C,Zöld Curry Rizzsel: Csirke,"a, g",3690
+Các Món Cơm,38D,Zöld Curry Rizzsel: Sült csirke,"a, g",3990
+Các Món Cơm,38E,Zöld Curry Rizzsel: Garnélarák,"a, b, g",3990
+Các Món Cơm,38F,Zöld Curry Rizzsel: Sült kacsa,"a, g",4290
+Các Món Cơm,38K,Zöld Curry Rizzsel: Panírozott lazac,"a, d, g",4590
+Các Món Cơm,39A,Zöld Curry Udon Tésztával: Tofu,"a, f, g",3290
+Các Món Cơm,39B,Zöld Curry Udon Tésztával: Marha,"a, g",3890
+Các Món Cơm,39C,Zöld Curry Udon Tésztával: Csirke,"a, g",3690
+Các Món Cơm,39D,Zöld Curry Udon Tésztával: Sült csirke,"a, g",3990
+Các Món Cơm,39E,Zöld Curry Udon Tésztával: Garnélarák,"a, b, g",3990
+Các Món Cơm,39F,Zöld Curry Udon Tésztával: Sült kacsa,"a, g",4290
+Các Món Cơm,39K,Zöld Curry Udon Tésztával: Panírozott lazac,"a, d, g",4590
+Sushi Các Loại,M1,Maki: Lazac / Salmon,d,1690
+Sushi Các Loại,M2,Maki: Füstölt Lazac / Smoked salmon,d,1890
+Sushi Các Loại,M3,Maki: Vörös tonhal / Red tuna,d,1790
+Sushi Các Loại,M4,Maki: Füstölt tonhal / Smoked tuna,d,1990
+Sushi Các Loại,M5,Maki: Tigris rák / Tiger shrimp,b,1890
+Sushi Các Loại,M6,Maki: Surimi,"a, b",1690
+Sushi Các Loại,M7,Maki: Tempura rák / Tempura shrimp,"a, b",1890
+Sushi Các Loại,M8,Maki: Avokádó / Avocado,,1490
+Sushi Các Loại,M9,Maki: Uborka / Cucumber,,1490
+Sushi Các Loại,M10,Maki: Mango,,1490
+Sushi Các Loại,M11,Maki: Masago kaviár,d,1890
+Sushi Các Loại,M12,Maki: Lazac avokádó,d,1990
+Sushi Các Loại,F1,Futomaki: Lazac / Salmon,"a, c, d",2990 / 4990
+Sushi Các Loại,F2,Futomaki: Tonhal / Tuna,"a, c, d",2990 / 4990
+Sushi Các Loại,F3,Futomaki: Tempura rák / Tempura shrimp,"a, b, c",2990 / 4990
+Sushi Các Loại,G1,Gunkan: Fűszeres Lazac / Spicy salmon,d,1890
+Sushi Các Loại,G2,Gunkan: Fűszeres Tonhal / Spicy tuna,d,1890
+Sushi Các Loại,G3,Gunkan: Fűszeres Surimi / Spicy surimi,b,1890
+Sushi Các Loại,G4,Gunkan: Masago Kaviár / Masago caviar,d,1890
+Sushi Các Loại,G5,Gunkan: Lazac Kaviár / Salmon caviar,d,2590
+Sushi Các Loại,G6,Gunkan: Wakame / Wakame,,1490
+Sushi Các Loại,T1,Temaki: Lazac / Salmon,"c, d, k",1690
+Sushi Các Loại,T2,Temaki: Tonhal / Tuna,"c, d, k",1690
+Sushi Các Loại,T3,Temaki: Surimi / Surimi,"b, c, k",1690
+Sushi Các Loại,T4,Temaki: Angolna / Eel,"b, c, k",1690
+Uramaki,I1,Lazac uramaki 1,"a, b, d",3390
+Uramaki,I2,Lazac uramaki 2,d,3390
+Uramaki,I3,Füstölt lazac uramaki,"a, b, c, d",3490
+Uramaki,I4,Tonhal uramaki 1,"a, b, d",3390
+Uramaki,I5,Tonhal Uramaki 2,d,3390
+Uramaki,I6,Füstölt Tonhal Uramaki,"a, b, c, d",3490
+Uramaki,I7,Caviar roll 1,"a, b, d",3190
+Uramaki,I8,Caviar roll 2,d,3190
+Uramaki,I9,California,"d, k",3190
+Uramaki,I10,Avokádó uramaki 1,"a, c, d",3290
+Uramaki,I11,Avokádó uramaki 2,"a, b, c",3290
+Uramaki,I12,Sesame roll 1,"a, b, k",2990
+Uramaki,I13,Sesame roll 2 (Vega),k,2890
+Uramaki,I14,Angolna kifordított maki,"a, b, d",3890
+Uramaki,I15,Hamachi uramaki,"a, b, d",3590
+Uramaki,I16,Cheechee ROLL,"d, g",3990
+Uramaki,I17,Nagoya ROLL,"d, g",3990
+Uramaki,I18,Takoya ROLL,"b, d, g",3990
+Uramaki,I19,RUBY Rainbow ROLL,"b, d, g",4290
+Uramaki,I20,Noshiro ROLL,"b, d, g",4290
+Uramaki,I21,Towada ROLL,"b, d, g",4290
+Uramaki,I22,Kami ROLL,"b, d, g",4290
+Uramaki,I23,Miyako ROLL,"b, d, g",4290
+Uramaki,I24,Furano ROLL,"b, d, g",4290
+Uramaki,I25,Okaka ROLL,"b, d, g",4290
+Sushi Set,S1,"Maki set (4 Lazac, 4 Tonhal, 4 Surimi, 4 Avokádó, 4 Uborka, 4 Rák)","a, b, d",4190
+Sushi Set,S2,"Maki nigiri set (4 Lazac, 4 Tonhal, 8 Uborka, 2 Lazac Nigiri)",,4190
+Sushi Set,S3,"Sake set (4 Lazac Kifordított, 4 Tonhal Kifordított, 1 Lazac Nigiri, 1 Tonhal Nigiri, 4 Lazac Maki, 4 Tonhal Maki)",,6290
+Sushi Set,S4,"Fire set (4 Avokádó Maki, 4 Uborka Maki, 6 Sült Lazac Maki, 2 Lazac Nigiri)","a, c, d",5990
+Sushi Set,S5,"Vega set (4 Avokádó Maki, 4 Uborka Maki, 8 Inside Out Vega, 2 Avokádó Nigiri)",,4590
+Sushi Set,S6,"Sushi imádó (4 Surimi Maki, 4 Tempura Maki, 4 Lazac Inside Out, 4 Kaviár Inside Out, 2 Lazac Nigiri)","a, b, d",6290
+Sushi Set,S7,"I.O. set (4 California I.O, 4 Surimi I.O, 8 Lazac Maki, 8 Uborka Maki, 2 Tonhal Nigiri)",,7290
+Sushi Set,S8,"Crunchy set (6 Sült Lazac Maki, 6 Sült Vega Maki, 6 Nigiri: 2 Lazac, 2 Tonhal, 2 Rák)","a, b, c, d",8590
+Sushi Set,S9,"Happy set (10 Nigiri, 8 Tempura, 8 Uborka, 8 Mangó)","a, b, d",9990
+Sushi Set,S10,"Ruby set (6 Sült Csirke Maki, 6 Sült Lazac Maki, 6 Nigiri, 8 Avokádó Kifordított Maki, 4 Lazac Kifordított, 4 Tonhal Kifordított, 8 Lazac Maki, 8 Uborka Maki, 8 Avokádó Maki, 8 Surimi Maki)","a, c, d",21990
+Sushi Set,S11,"Ruby set 2 (12 sült lazac futomaki, 8 lazac sashimi, 4 tonhal sashimi, 4 rák sashimi, 24 uramaki, 8 nigiri, 24 maki, 8 omlett)","a, b, c, d, g",29990
+Sushi Set,S12,"Ruby party set (30 nigiri, 16 lazac sashimi, 12 sült futomaki, 24 uramaki, 18 maki)","a, b, c, d, g",45990

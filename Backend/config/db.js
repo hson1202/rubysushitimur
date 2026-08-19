@@ -17,8 +17,11 @@ export const connectDB = async () => {
     // Clean connection string - remove appName if exists
     const cleanMongoUrl = mongoUrl.replace(/[?&]appName=[^&]*/g, '').replace(/[?&]$/, '');
 
+    const dbName = process.env.MONGODB_DBNAME;
+
     // Connect with timeout and retry options
     await mongoose.connect(cleanMongoUrl, {
+      ...(dbName ? { dbName } : {}),
       serverSelectionTimeoutMS: 30000, // 30 seconds
       socketTimeoutMS: 45000,
       maxPoolSize: 10,

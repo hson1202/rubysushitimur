@@ -10,7 +10,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import config from '../../config/config'
 import { isFoodAvailable } from '../../utils/timeUtils'
-import { getDisplayDescription } from '../../utils/productDisplay'
+import { getLocalizedDescription } from '../../utils/productDisplay'
 
 const Menu = () => {
   const { food_list, isLoadingFood } = useContext(StoreContext)
@@ -147,14 +147,14 @@ const Menu = () => {
     const searchLower = normalizeValue(searchTerm)
     return availableFoods.filter((food) => {
       const localizedName = getLocalizedName(food)
-      const description = getDisplayDescription(food.description)
+      const description = getLocalizedDescription(food, i18n.language)
       return (
         normalizeValue(localizedName).includes(searchLower) ||
         normalizeValue(food.name).includes(searchLower) ||
         normalizeValue(description).includes(searchLower)
       )
     })
-  }, [food_list, searchTerm, getLocalizedName])
+  }, [food_list, searchTerm, getLocalizedName, i18n.language])
 
   // Build one block per category, then sort dishes by menu SKU.
   const menuBlocks = useMemo(() => {
@@ -307,7 +307,10 @@ const Menu = () => {
                         nameVI={food.nameVI}
                         nameEN={food.nameEN}
                         nameHU={food.nameHU}
-                        description={food.description} 
+                        description={food.description}
+                        descriptionVI={food.descriptionVI}
+                        descriptionEN={food.descriptionEN}
+                        descriptionHU={food.descriptionHU} 
                         price={food.price} 
                         image={food.image}
                         sku={food.sku}

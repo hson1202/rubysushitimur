@@ -2,7 +2,7 @@ import multer from "multer"
 import sharp from "sharp"
 import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { randomBytes } from "crypto"
-import r2 from "../config/r2.js"
+import r2, { isR2Configured } from "../config/r2.js"
 
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -21,6 +21,14 @@ const R2_PREFIX = (process.env.R2_PREFIX || "rubysushi")
 class R2Storage {
   async _handleFile(req, file, cb) {
     try {
+      if (!isR2Configured || !r2 || !BUCKET || !PUBLIC_URL) {
+        return cb(
+          new Error(
+            "Cloudflare R2 is not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL."
+          )
+        )
+      }
+
       if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
         return cb(
           new Error(

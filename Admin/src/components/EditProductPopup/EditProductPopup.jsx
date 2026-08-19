@@ -493,6 +493,36 @@ const EditProductPopup = ({
                     placeholder={t('products.nameHUPlaceholder') || t('products.nameHU')}
                   />
                 </div>
+                <div className="form-group">
+                  <label>{t('products.descriptionHU')}</label>
+                  <textarea
+                    name="descriptionHU"
+                    value={editForm.descriptionHU || ''}
+                    onChange={onInputChange}
+                    placeholder={t('products.descriptionHU')}
+                    rows="3"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('products.descriptionEN')}</label>
+                  <textarea
+                    name="descriptionEN"
+                    value={editForm.descriptionEN || ''}
+                    onChange={onInputChange}
+                    placeholder={t('products.descriptionEN')}
+                    rows="3"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('products.descriptionVI')}</label>
+                  <textarea
+                    name="descriptionVI"
+                    value={editForm.descriptionVI || ''}
+                    onChange={onInputChange}
+                    placeholder={t('products.descriptionVI')}
+                    rows="3"
+                  />
+                </div>
               </div>
             )}
 

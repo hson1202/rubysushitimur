@@ -24,6 +24,7 @@ import emailTestRouter from "./routes/emailTestRoute.js"
 import deliveryRouter from "./routes/deliveryRoute.js"
 import restaurantInfoRouter from "./routes/restaurantInfoRoutes.js"
 import errorLogRouter from "./routes/errorLogRoute.js"
+import allergenRouter from "./routes/allergenRoute.js"
 import eventBus from "./services/eventBus.js"
 import authMiddleware, { verifyAdmin } from "./middleware/auth.js"
 import { sanitizeRequest, errorHandler } from "./middleware/security.js"
@@ -158,6 +159,7 @@ app.use("/api/cloudinary", cloudinarySignRouter)
 app.use("/api/delivery", deliveryRouter)
 app.use("/api/restaurant-info", restaurantInfoRouter)
 app.use("/api/error-logs", errorLogRouter)
+app.use("/api/allergen", allergenRouter)
 
 // --- Server-Sent Events (SSE) for realtime notifications ---
 const sseClients = []

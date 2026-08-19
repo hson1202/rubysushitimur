@@ -1,0 +1,18 @@
+{
+  "allergens": [
+    { "code": "A", "nameHU": "Glutén" },
+    { "code": "B", "nameHU": "Rákfélék" },
+    { "code": "C", "nameHU": "Tojás" },
+    { "code": "D", "nameHU": "Hal" },
+    { "code": "E", "nameHU": "Földimogyoró" },
+    { "code": "F", "nameHU": "Szója" },
+    { "code": "G", "nameHU": "Tej" },
+    { "code": "H", "nameHU": "Diófélék" },
+    { "code": "I", "nameHU": "Zeller" },
+    { "code": "J", "nameHU": "Mustár" },
+    { "code": "K", "nameHU": "Szezámmag" },
+    { "code": "L", "nameHU": "Szulfitok" },
+    { "code": "M", "nameHU": "Csillagfürt" },
+    { "code": "N", "nameHU": "Puhatestűek" }
+  ]
+}
