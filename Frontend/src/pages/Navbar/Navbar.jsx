@@ -85,9 +85,6 @@ const Navbar = ({ setShowLogin }) => {
             {/* Desktop Menu */}
             <ul className='navbar-menu desktop-menu'>
                 <Link to='/menu' onClick={()=>setMenu("menu")} className={menu==="menu"?"active":""}>{t('nav.menu')}</Link>
-                <a href={config.EXTERNAL_LINKS.ABOUT}>{t('nav.about')}</a>
-                {/* <Link to='/blog' onClick={()=>setMenu("blog")} className={menu==="blog"?"active":""}>{t('nav.blog')}</Link> */}
-                <a href={config.EXTERNAL_LINKS.RESERVATION}>{t('nav.booking')}</a>
                 {isAuthenticated && user?.role === 'admin' && (
                     <Link
                         to='/admin'
@@ -103,9 +100,6 @@ const Navbar = ({ setShowLogin }) => {
             <div className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}>
                 <ul className='navbar-menu mobile-menu'>
                     <Link to='/menu' onClick={() => handleNavLinkClick("menu")} className={menu==="menu"?"active":""}>{t('nav.menu')}</Link>
-                    <a href={config.EXTERNAL_LINKS.ABOUT} onClick={() => handleNavLinkClick("about")}>{t('nav.about')}</a>
-                    {/* <Link to='/blog' onClick={() => handleNavLinkClick("blog")} className={menu==="blog"?"active":""}>{t('nav.blog')}</Link> */}
-                    <a href={config.EXTERNAL_LINKS.RESERVATION} onClick={() => handleNavLinkClick("reservation")}>{t('nav.booking')}</a>
                     
                     {/* Account Section in Mobile Menu */}
                     <div className="mobile-account-section">
