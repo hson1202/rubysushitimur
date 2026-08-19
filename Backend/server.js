@@ -32,6 +32,10 @@ import { errorHandlerWithLogging } from "./middleware/errorLogging.js"
 
 const app = express()
 
+// Render (and other reverse proxies) set X-Forwarded-For.
+// Required so express-rate-limit can identify clients correctly.
+app.set("trust proxy", 1)
+
 // --- HTTP security headers ---
 app.use(helmet())
 
@@ -100,37 +104,34 @@ app.use("/api/admin/login", authLimiter)
 app.use("/api/order", writeLimiter)
 app.use("/api/contact", writeLimiter)
 
-let isConnected = false
-
 const ensureDbConnection = async () => {
   if (mongoose.connection.readyState === 1) {
-    isConnected = true
     return
   }
-  if (!isConnected) {
-    const ok = await connectDB()
-    if (!ok) {
-      throw new Error("Database connection failed")
-    }
-    isConnected = true
-    console.log("✅ Database connected successfully")
+  const ok = await connectDB()
+  if (!ok) {
+    throw new Error("Database connection failed")
   }
 }
 
-// Optional: Database middleware for critical routes only (commented out for now)
-// app.use(async (req, res, next) => {
-//   try {
-//     await ensureDbConnection()
-//     next()
-//   } catch (error) {
-//     console.error("Database middleware error:", error.message)
-//     return res.status(503).json({ 
-//       success: false,
-//       error: "Database unavailable", 
-//       message: error.message 
-//     })
-//   }
-// })
+const skipDbRetryPaths = new Set(["/", "/health"])
+
+app.use(async (req, res, next) => {
+  if (skipDbRetryPaths.has(req.path)) {
+    return next()
+  }
+  try {
+    await ensureDbConnection()
+    next()
+  } catch (error) {
+    console.error("Database middleware error:", error.message)
+    return res.status(503).json({
+      success: false,
+      error: "Database unavailable",
+      message: error.message
+    })
+  }
+})
 
 // Debug middleware to track all requests - chỉ bật khi không phải production
 if (process.env.NODE_ENV !== "production") {
