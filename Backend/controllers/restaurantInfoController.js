@@ -215,13 +215,19 @@ const uploadLogo = async (req, res) => {
       return res.status(400).json({ success: false, message: "No file uploaded" })
     }
     const url = req.file.path || req.file.secure_url || req.file.url
+    if (!url) {
+      return res.status(500).json({ success: false, message: "Upload succeeded but no file URL was returned" })
+    }
     const info = await RestaurantInfo.getSingleton()
     info.logoUrl = url
     await info.save()
     return res.json({ success: true, url, data: info })
   } catch (error) {
     console.error("Error uploading logo:", error)
-    return res.status(500).json({ success: false, message: "Upload failed" })
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Upload failed"
+    })
   }
 }
 

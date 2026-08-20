@@ -17,8 +17,7 @@ import {
   Legend
 } from 'recharts'
 
-axios.defaults.timeout = 10000
-axios.defaults.headers.common['Content-Type'] = 'application/json'
+axios.defaults.timeout = 30000
 
 const useViewport = () => {
   const [width, setWidth] = useState(

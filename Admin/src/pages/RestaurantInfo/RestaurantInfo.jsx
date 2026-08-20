@@ -228,6 +228,19 @@ const RestaurantInfo = ({ url }) => {
   const handleLogoFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Chỉ chấp nhận JPEG, PNG, WebP hoặc SVG');
+      if (logoInputRef.current) logoInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File quá lớn (tối đa 5MB)');
+      if (logoInputRef.current) logoInputRef.current.value = '';
+      return;
+    }
+
     setLogoPreview(URL.createObjectURL(file));
     try {
       setIsUploadingLogo(true);
@@ -235,7 +248,11 @@ const RestaurantInfo = ({ url }) => {
       const fd = new FormData();
       fd.append('logo', file);
       const res = await axios.post(`${url}/api/restaurant-info/upload-logo`, fd, {
-        headers: { token }
+        headers: {
+          token,
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 60000
       });
       if (res.data.success) {
         const newLogoUrl = res.data.url || res.data.data?.logoUrl || '';
@@ -246,9 +263,13 @@ const RestaurantInfo = ({ url }) => {
         toast.success('Logo đã được cập nhật!');
       } else {
         toast.error(res.data.message || 'Upload failed');
+        setLogoPreview(resolveMediaUrl(formData.logoUrl || ''));
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Logo upload failed');
+      const message = err.code === 'ECONNABORTED'
+        ? 'Upload quá lâu, vui lòng thử lại'
+        : (err.response?.data?.message || err.response?.data?.error || 'Logo upload failed');
+      toast.error(message);
       setLogoPreview(resolveMediaUrl(formData.logoUrl || ''));
     } finally {
       setIsUploadingLogo(false);
@@ -455,9 +476,9 @@ const RestaurantInfo = ({ url }) => {
                     </button>
                   )}
                 </div>
-                <input ref={logoInputRef} type="file" accept="image/*" hidden onChange={handleLogoFileChange} />
+                <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" hidden onChange={handleLogoFileChange} />
               </div>
-              <small>Or paste a URL directly:</small>
+              <small>JPEG, PNG, WebP hoặc SVG — tối đa 5MB. Or paste a URL directly:</small>
               <input type="url" name="logoUrl" value={formData.logoUrl}
                 onChange={(e) => { handleInputChange(e); setLogoPreview(resolveMediaUrl(e.target.value)); }}
                 placeholder="https://..." style={{ marginTop: '6px' }} />
