@@ -39,59 +39,11 @@ app.set("trust proxy", 1)
 // --- HTTP security headers ---
 app.use(helmet())
 
-// --- CORS: cho phép nhiều FE (chính + test) trỏ vào 1 BE ---
-// Hỗ trợ danh sách cách nhau bởi dấu phẩy trong:
-// FRONTEND_URL, ADMIN_URL, CORS_ORIGIN, CORS_ORIGINS
-const parseOriginList = (...values) =>
-  values
-    .flatMap((value) => String(value || "").split(/[,\s]+/))
-    .map((origin) => origin.trim().replace(/\/$/, ""))
-    .filter(Boolean)
-
-const allowedOrigins = [...new Set(parseOriginList(
-  process.env.FRONTEND_URL,
-  process.env.ADMIN_URL,
-  process.env.CORS_ORIGIN,
-  process.env.CORS_ORIGINS
-))]
-
-const isDev = process.env.NODE_ENV !== "production"
-
-const isLocalDevOrigin = (origin) => {
-  try {
-    const { hostname } = new URL(origin)
-    return hostname === "localhost" || hostname === "127.0.0.1"
-  } catch {
-    return false
-  }
-}
-
-if (allowedOrigins.length) {
-  console.log("CORS allowed origins:", allowedOrigins.join(", "))
-} else {
-  console.log("CORS: no origin whitelist set — allowing all origins")
-}
-
+// --- CORS: FE chính + FE phụ + Admin đều gọi được 1 BE ---
+// origin: true = echo Origin của request, không 500, không khóa FE khi thêm env.
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Cho phép request từ server nội bộ / tool (origin === undefined)
-      if (!origin) return callback(null, true)
-
-      const normalized = origin.replace(/\/$/, "")
-
-      if (!allowedOrigins.length || allowedOrigins.includes(normalized)) {
-        return callback(null, true)
-      }
-
-      // Local FE (cổng bất kỳ) khi không phải production
-      if (isDev && isLocalDevOrigin(normalized)) {
-        return callback(null, true)
-      }
-
-      console.warn(`CORS blocked origin: ${origin}`)
-      return callback(new Error("Not allowed by CORS"))
-    },
+    origin: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true
   })
