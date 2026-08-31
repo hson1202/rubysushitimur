@@ -36,7 +36,9 @@ const CategoryFilter = ({  categories = [],
 
   const getStickyHeaderHeight = useCallback(() => {
     const rootStyles = getComputedStyle(document.documentElement)
-    return parseFloat(rootStyles.getPropertyValue('--menu-topbar-h')) || 58
+    const topbar = parseFloat(rootStyles.getPropertyValue('--menu-topbar-h')) || 58
+    const search = parseFloat(rootStyles.getPropertyValue('--menu-search-h')) || 0
+    return topbar + search
   }, [])
 
   const updateScrollIndicators = useCallback(() => {

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import config from '../../config/config'
 import { isFoodAvailable } from '../../utils/timeUtils'
 import { getLocalizedDescription } from '../../utils/productDisplay'
+import useDebounce from '../../hooks/useDebounce'
 
 const Menu = () => {
   const { food_list, isLoadingFood } = useContext(StoreContext)
@@ -22,10 +23,15 @@ const Menu = () => {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showCartPopup, setShowCartPopup] = useState(false)
   const categoryRefs = useRef({})
+  const searchRef = useRef(null)
+  const debouncedSearchTerm = useDebounce(searchTerm, 200)
+  const activeSearch = searchTerm.trim() === '' ? '' : debouncedSearchTerm
 
   const getMenuStickyOffset = useCallback(() => {
     const rootStyles = getComputedStyle(document.documentElement)
-    return parseFloat(rootStyles.getPropertyValue('--menu-topbar-h')) || 58
+    const topbar = parseFloat(rootStyles.getPropertyValue('--menu-topbar-h')) || 58
+    const search = parseFloat(rootStyles.getPropertyValue('--menu-search-h')) || 48
+    return topbar + search
   }, [])
 
   const scrollToCategory = useCallback((categoryId, { behavior = 'smooth' } = {}) => {
@@ -56,15 +62,20 @@ const Menu = () => {
   }, [])
 
   useEffect(() => {
-    const syncTopbarHeight = () => {
+    const syncStickyHeights = () => {
       const navbar = document.querySelector('.navbar-wrapper')
       const height = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 58
       document.documentElement.style.setProperty('--menu-topbar-h', `${height}px`)
+
+      const searchHeight = searchRef.current
+        ? Math.ceil(searchRef.current.getBoundingClientRect().height)
+        : 48
+      document.documentElement.style.setProperty('--menu-search-h', `${searchHeight}px`)
     }
 
-    syncTopbarHeight()
-    window.addEventListener('resize', syncTopbarHeight)
-    return () => window.removeEventListener('resize', syncTopbarHeight)
+    syncStickyHeights()
+    window.addEventListener('resize', syncStickyHeights)
+    return () => window.removeEventListener('resize', syncStickyHeights)
   }, [])
 
   const fetchMenuStructure = async () => {
@@ -87,7 +98,9 @@ const Menu = () => {
   }, [i18n.language])
 
   const normalizeValue = (value) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : ''
+    typeof value === 'string'
+      ? value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      : ''
 
   const menuSkuCollator = useMemo(
     () =>
@@ -147,19 +160,27 @@ const Menu = () => {
 
   const filteredFoods = useMemo(() => {
     const availableFoods = food_list.filter((food) => isFoodAvailable(food))
-    if (!searchTerm) return availableFoods
+    if (!activeSearch) return availableFoods
 
-    const searchLower = normalizeValue(searchTerm)
+    const searchLower = normalizeValue(activeSearch)
+    if (!searchLower) return availableFoods
+
     return availableFoods.filter((food) => {
       const localizedName = getLocalizedName(food)
       const description = getLocalizedDescription(food, i18n.language)
-      return (
-        normalizeValue(localizedName).includes(searchLower) ||
-        normalizeValue(food.name).includes(searchLower) ||
-        normalizeValue(description).includes(searchLower)
-      )
+      const searchable = [
+        localizedName,
+        food.name,
+        food.nameVI,
+        food.nameEN,
+        food.nameHU,
+        food.sku,
+        description,
+      ]
+
+      return searchable.some((value) => normalizeValue(value).includes(searchLower))
     })
-  }, [food_list, searchTerm, getLocalizedName, i18n.language])
+  }, [food_list, activeSearch, getLocalizedName, i18n.language])
 
   // Build one block per category, then sort dishes by menu SKU.
   const menuBlocks = useMemo(() => {
@@ -243,6 +264,44 @@ const Menu = () => {
         </aside>
 
         <div className="menu-content">
+      <div className="menu-search" ref={searchRef}>
+        <div className="menu-search-pill">
+          <svg
+            className="menu-search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="6.25" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M16.2 16.2L20 20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            className="menu-search-input"
+            placeholder={t('menu.searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label={t('menu.searchPlaceholder')}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            enterKeyHint="search"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="menu-search-clear"
+              onClick={() => setSearchTerm('')}
+              aria-label={t('menu.clearSearch')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
       {/* Food Sections - one per category */}
       <div className="menu-sections-container">
         {loading || isLoadingFood ? (
@@ -259,10 +318,10 @@ const Menu = () => {
         ) : filteredFoods.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
-            <h3>No dishes found</h3>
+            <h3>{t('menu.noResults')}</h3>
             <p>
               {searchTerm
-                ? `No dishes match your search. Try a different keyword.`
+                ? t('menu.noResultsHint')
                 : 'No dishes available at the moment.'}
             </p>
             {searchTerm && (
@@ -270,7 +329,7 @@ const Menu = () => {
                 onClick={() => setSearchTerm('')}
                 className="reset-btn"
               >
-                Clear Search
+                {t('menu.clearSearch')}
               </button>
             )}
           </div>

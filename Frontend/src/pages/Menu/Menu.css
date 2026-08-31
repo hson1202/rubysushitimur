@@ -1,5 +1,6 @@
 :root {
   --menu-topbar-h: 58px;
+  --menu-search-h: 48px;
 }
 
 /* Sushi doodle pattern on the outer gutters (body around .app) */
@@ -93,9 +94,91 @@ body.pattern-route {
 .menu-content {
   flex: 1;
   min-width: 0;
-  padding: 12px 0 8px;
+  padding: 8px 0 8px;
   background: var(--menu-content-bg);
   border-radius: 0;
+}
+
+.menu-search {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--menu-topbar-h);
+  z-index: 40;
+  background: var(--menu-content-bg);
+  padding: 4px 0 10px;
+}
+
+.menu-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  margin: 0;
+  padding: 0 12px 0 14px;
+  cursor: text;
+  background: var(--menu-card);
+  border: 1px solid var(--menu-border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(71, 59, 45, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-search-pill:focus-within {
+  border-color: var(--menu-accent);
+  box-shadow: 0 0 0 3px rgba(163, 58, 50, 0.12);
+}
+
+.menu-search-icon {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--menu-muted);
+}
+
+.menu-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--menu-text);
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.menu-search-input::placeholder {
+  color: var(--menu-muted);
+  opacity: 0.78;
+}
+
+.menu-search-clear {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(163, 58, 50, 0.1);
+  color: var(--menu-accent);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.menu-search-clear:hover {
+  background: rgba(163, 58, 50, 0.18);
+}
+
+.menu-search-clear svg {
+  width: 11px;
+  height: 11px;
 }
 
 .menu-sections-container {
@@ -144,7 +227,7 @@ body.pattern-route {
   border: none;
   border-radius: 0;
   box-shadow: none;
-  scroll-margin-top: var(--menu-topbar-h);
+  scroll-margin-top: calc(var(--menu-topbar-h) + var(--menu-search-h));
   padding-top: 4px;
 }
 
@@ -307,8 +390,22 @@ body.pattern-route {
   .menu-content {
     flex: 1;
     min-width: 0;
-    padding: 8px 14px 0;
+    padding: 6px 14px 0;
     background: var(--menu-content-bg);
+  }
+
+  .menu-search {
+    padding: 2px 0 8px;
+  }
+
+  .menu-search-pill {
+    height: 36px;
+    padding: 0 10px 0 12px;
+    gap: 7px;
+  }
+
+  .menu-search-input {
+    font-size: 16px;
   }
 
   .menu-categories-list {
@@ -344,7 +441,11 @@ body.pattern-route {
   }
 
   .menu-content {
-    padding: 6px 10px 0;
+    padding: 4px 10px 0;
+  }
+
+  .menu-search {
+    padding: 2px 0 6px;
   }
 }
 
@@ -355,7 +456,7 @@ body.pattern-route {
   }
 
   .menu-content {
-    padding: 6px 8px 0;
+    padding: 4px 8px 0;
   }
 
   .menu-category-header {

@@ -70,6 +70,9 @@ const resources = {
       'menu.subtitle': 'Chọn từ thực đơn đa dạng với nhiều món ăn ngon. Sứ mệnh của chúng tôi là thỏa mãn cơn thèm của bạn và nâng cao trải nghiệm ăn uống, một bữa ăn ngon tại một thời điểm.',
       'menu.allCategories': 'Tất cả danh mục',
       'menu.searchPlaceholder': 'Tìm kiếm món ăn...',
+      'menu.noResults': 'Không tìm thấy món',
+      'menu.noResultsHint': 'Không có món khớp. Thử từ khóa khác.',
+      'menu.clearSearch': 'Xóa tìm kiếm',
 
       // Category Filter
       'filter.title': 'Danh mục',
@@ -741,6 +744,9 @@ const resources = {
       'menu.subtitle': 'Choose from a diverse menu featuring a delectable array of dishes. Our mission is to satisfy your cravings and elevate your dining experience, one delicious meal at a time.',
       'menu.allCategories': 'All Categories',
       'menu.searchPlaceholder': 'Search for food...',
+      'menu.noResults': 'No dishes found',
+      'menu.noResultsHint': 'No dishes match your search. Try a different keyword.',
+      'menu.clearSearch': 'Clear Search',
 
       // Category Filter
       'filter.title': 'Category',
@@ -1414,6 +1420,9 @@ const resources = {
       'menu.subtitle': 'Válasszon változatos, ínycsiklandó ételekből. Célunk, hogy kielégítsük étvágyát és felemeljük étkezési élményét.',
       'menu.allCategories': 'Minden kategória',
       'menu.searchPlaceholder': 'Étel keresése...',
+      'menu.noResults': 'Nincs találat',
+      'menu.noResultsHint': 'Nincs a keresésnek megfelelő étel. Próbáljon másik szót.',
+      'menu.clearSearch': 'Keresés törlése',
 
       // Category Filter
       'filter.title': 'Kategória',
