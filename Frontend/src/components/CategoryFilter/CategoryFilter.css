@@ -27,7 +27,7 @@
   min-height: 0;
 }
 
-/* ===== DESKTOP: vertical category list (Ruby Sushi style) ===== */
+/* ===== DESKTOP: vertical category list (wood tab / inkan) ===== */
 .category-carousel-container {
   display: flex;
   flex-direction: column;
@@ -47,13 +47,13 @@
   border: none;
   border-radius: 0 8px 8px 0;
   background: transparent;
-  color: rgba(244, 244, 245, 0.55);
+  color: #6f675c;
   text-align: left;
   cursor: pointer;
   transition:
     color 0.22s ease,
     background 0.22s ease,
-    text-shadow 0.22s ease;
+    box-shadow 0.22s ease;
   outline: none;
   flex-direction: row;
   justify-content: flex-start;
@@ -66,15 +66,14 @@
   left: 0;
   top: 12px;
   bottom: 12px;
-  width: 2px;
+  width: 3px;
   border-radius: 999px;
-  background: var(--brand-accent, #d3122a);
+  background: var(--menu-accent, #a33a32);
   opacity: 0;
   transform: scaleY(0.45);
   transition:
     opacity 0.22s ease,
-    transform 0.22s ease,
-    box-shadow 0.22s ease;
+    transform 0.22s ease;
 }
 
 .category-chip::after {
@@ -84,7 +83,7 @@
   right: 4px;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(245, 245, 245, 0.08), rgba(245, 245, 245, 0));
+  background: linear-gradient(90deg, var(--menu-border, #d8cdbb), rgba(216, 205, 187, 0));
 }
 
 .category-chip:last-child::after {
@@ -92,25 +91,24 @@
 }
 
 .category-chip:hover {
-  color: var(--brand-text, #f4f4f5);
-  background: linear-gradient(90deg, rgba(240, 240, 240, 0.055), rgba(240, 240, 240, 0));
+  color: var(--menu-text, #282621);
+  background: linear-gradient(90deg, rgba(255, 253, 252, 0.78), rgba(255, 253, 252, 0.12));
 }
 
 .category-chip.active {
-  color: #ffffff;
+  color: var(--menu-text, #282621);
   background: linear-gradient(
     90deg,
-    rgba(211, 18, 42, 0.18),
-    rgba(211, 18, 42, 0.04),
-    rgba(211, 18, 42, 0)
+    var(--menu-card, #fffdfc) 0%,
+    rgba(255, 253, 252, 0.72) 62%,
+    rgba(255, 253, 252, 0.08) 100%
   );
-  text-shadow: rgba(211, 18, 42, 0.28) 0 0 18px;
+  box-shadow: inset 0 0 0 1px rgba(216, 205, 187, 0.55);
 }
 
 .category-chip.active::before {
   opacity: 1;
   transform: scaleY(1);
-  box-shadow: rgba(211, 18, 42, 0.55) 0 0 16px;
 }
 
 .category-chip-label {
@@ -121,6 +119,11 @@
   line-height: 1.35;
 }
 
+.category-chip.active .category-chip-label {
+  font-weight: 700;
+  color: var(--menu-accent, #a33a32);
+}
+
 .category-chip-section {
   font-size: 0.68rem;
   color: inherit;
@@ -129,7 +132,7 @@
 }
 
 .category-chip:focus-visible {
-  outline: 2px solid var(--brand-accent);
+  outline: 2px solid var(--menu-accent, #a33a32);
   outline-offset: 2px;
 }
 
@@ -137,7 +140,7 @@
   display: none;
 }
 
-/* ===== MOBILE: narrow vertical sidebar (Ruby Sushi style) ===== */
+/* ===== MOBILE: narrow vertical sidebar ===== */
 @media (max-width: 768px) {
   .category-filter {
     padding: 0;
@@ -174,7 +177,7 @@
     border-left: none;
     border-radius: 0;
     background: transparent;
-    color: rgba(244, 244, 245, 0.5);
+    color: #6f675c;
     text-align: center;
     align-items: center;
     justify-content: center;
@@ -190,9 +193,9 @@
     left: 0;
     top: 14px;
     bottom: 14px;
-    width: 2px;
+    width: 3px;
     border-radius: 999px;
-    background: var(--brand-accent);
+    background: var(--menu-accent, #a33a32);
     opacity: 0;
     transform: scaleY(0.45);
     transition: opacity 0.22s ease, transform 0.22s ease;
@@ -207,9 +210,9 @@
     height: 1px;
     background: linear-gradient(
       90deg,
-      rgba(245, 245, 245, 0),
-      rgba(245, 245, 245, 0.09),
-      rgba(245, 245, 245, 0)
+      rgba(216, 205, 187, 0),
+      var(--menu-border, #d8cdbb),
+      rgba(216, 205, 187, 0)
     );
   }
 
@@ -218,19 +221,19 @@
   }
 
   .category-chip:hover {
-    color: var(--brand-text);
-    background: linear-gradient(90deg, rgba(240, 240, 240, 0.043), rgba(240, 240, 240, 0));
+    color: var(--menu-text, #282621);
+    background: linear-gradient(90deg, rgba(255, 253, 252, 0.72), rgba(255, 253, 252, 0.08));
   }
 
   .category-chip.active {
-    color: #ffffff;
+    color: var(--menu-text, #282621);
     background: linear-gradient(
       90deg,
-      rgba(211, 18, 42, 0.22),
-      rgba(211, 18, 42, 0.05),
-      rgba(211, 18, 42, 0)
+      var(--menu-card, #fffdfc) 0%,
+      rgba(255, 253, 252, 0.55) 70%,
+      rgba(255, 253, 252, 0) 100%
     );
-    text-shadow: rgba(211, 18, 42, 0.28) 0 0 18px;
+    box-shadow: none;
   }
 
   .category-chip.active::before {
@@ -245,6 +248,10 @@
     line-height: 1.28;
     text-transform: uppercase;
   }
+
+  .category-chip.active .category-chip-label {
+    color: var(--menu-accent, #a33a32);
+  }
 }
 
 @media (max-width: 390px) {
@@ -257,5 +264,18 @@
   .category-chip-label {
     font-size: 8.2px;
     letter-spacing: 0.045em;
+  }
+}
+
+@media (max-width: 320px) {
+  .category-chip {
+    min-height: 56px;
+    height: 56px;
+    padding: 10px 4px 10px 8px;
+  }
+
+  .category-chip-label {
+    font-size: 7.6px;
+    letter-spacing: 0.03em;
   }
 }

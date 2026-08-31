@@ -51,6 +51,11 @@ const Menu = () => {
   }, [])
 
   useEffect(() => {
+    document.body.classList.add('pattern-route')
+    return () => document.body.classList.remove('pattern-route')
+  }, [])
+
+  useEffect(() => {
     const syncTopbarHeight = () => {
       const navbar = document.querySelector('.navbar-wrapper')
       const height = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 58

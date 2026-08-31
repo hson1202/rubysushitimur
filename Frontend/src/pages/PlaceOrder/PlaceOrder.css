@@ -1,3 +1,18 @@
+/* Light Japandi tokens — match Menu / pattern-route layout */
+.place-order-page {
+    --brand-bg: #fbf8f1;
+    --brand-surface: #fffdfc;
+    --brand-surface-2: #f3ece0;
+    --brand-border: #d8cdbb;
+    --brand-text: #282621;
+    --brand-muted: #756e63;
+    --brand-accent: #a33a32;
+    --brand-accent-hover: #8b312b;
+    color: var(--brand-text);
+    background: var(--brand-bg);
+    color-scheme: light;
+}
+
 .place-order{
     display: flex;
     align-items: start;
@@ -5,8 +20,65 @@
     gap: 50px;
     margin-top: 0;
     min-height: 100vh;
-    background: var(--brand-bg);
+    background: transparent;
     padding: 0 24px 40px;
+}
+
+/* Paper-white fields so they sit cleanly on the cream page */
+.place-order-page input[type="text"],
+.place-order-page input[type="email"],
+.place-order-page input[type="tel"],
+.place-order-page .address-input,
+.place-order-page .manual-field input,
+.place-order-page .time-slot-select,
+.place-order-page .note-textarea {
+    background: #fffdfc;
+    color: var(--brand-text);
+    border-color: var(--brand-border);
+}
+
+.place-order-page input::placeholder,
+.place-order-page textarea::placeholder {
+    color: var(--brand-muted);
+}
+
+.place-order-page input:focus,
+.place-order-page select:focus,
+.place-order-page textarea:focus,
+.place-order-page .address-input:focus,
+.place-order-page .manual-field input:focus,
+.place-order-page .time-slot-select:focus,
+.place-order-page .note-textarea:focus {
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 3px rgba(163, 58, 50, 0.12);
+}
+
+.place-order-page .suggestions-dropdown {
+    box-shadow: 0 8px 22px rgba(71, 59, 45, 0.12);
+}
+
+.place-order-page .zone-card {
+    box-shadow: 0 4px 14px rgba(71, 59, 45, 0.06);
+    border: 1px solid var(--brand-border);
+}
+
+.place-order-page .zone-card:hover {
+    box-shadow: 0 8px 22px rgba(71, 59, 45, 0.08);
+}
+
+.place-order-page .time-slot-select option {
+    background: #fffdfc;
+    color: #282621;
+}
+
+.place-order-page .manual-picker {
+    box-shadow: 0 16px 40px rgba(71, 59, 45, 0.16);
+    border: 1px solid var(--brand-border);
+}
+
+.place-order-page .success-popup {
+    box-shadow: 0 16px 40px rgba(71, 59, 45, 0.16);
+    border: 1px solid var(--brand-border);
 }
 
 /* Delivery Zones Display Wrapper */
@@ -14,7 +86,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px 40px;
-    background: var(--brand-bg);
+    background: transparent;
 }
 
 /* Saved Address Card Styles */
@@ -118,7 +190,8 @@
     width: 100%;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(71, 59, 45, 0.18);
+    border: 1px solid var(--brand-border);
 }
 
 .address-modal-header {
@@ -254,7 +327,7 @@
     font-size: 28px;
     font-weight: 600;
     margin-bottom: 32px;
-    color: var(--brand-text);
+    color: #282621;
     letter-spacing: -0.02em;
 }
 .place-order-left input{
@@ -287,10 +360,11 @@
 .place-order .cart-total {
     background: var(--brand-surface);
     padding: 24px;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--brand-border);
     position: sticky;
     top: 20px;
+    box-shadow: 0 4px 14px rgba(71, 59, 45, 0.06);
 }
 
 .place-order .cart-total h2 {
@@ -374,7 +448,7 @@
 
 .order-type-section h3 {
     margin: 0 0 10px 0;
-    color: var(--brand-text);
+    color: #282621;
     font-size: 0.9rem;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -410,7 +484,7 @@
 
 .order-type-option span {
     font-weight: 400;
-    color: var(--brand-muted);
+    color: #756e63;
     font-size: 0.9rem;
 }
 
@@ -421,7 +495,7 @@
 
 .fulfillment-type-section h3 {
     margin: 0 0 10px 0;
-    color: var(--brand-text);
+    color: #282621;
     font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -634,7 +708,7 @@
         background: var(--brand-surface);
         padding: 20px;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 2px 8px rgba(71, 59, 45, 0.08);
         border: 1px solid var(--brand-border);
         margin-bottom: 20px;
     }
@@ -685,7 +759,7 @@
         z-index: 1000;
         padding: 15px 20px;
         background: var(--brand-surface);
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 -2px 8px rgba(71, 59, 45, 0.08);
         border-top: 1px solid var(--brand-border);
     }
     
@@ -822,7 +896,7 @@
 .section-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--brand-text);
+    color: #282621;
     margin: 0 0 16px 0;
     letter-spacing: -0.01em;
 }
@@ -844,7 +918,7 @@
     font-weight: 600;
     font-size: 0.95rem;
     margin-bottom: 10px;
-    color: var(--brand-text);
+    color: #282621;
     letter-spacing: -0.01em;
 }
 
@@ -852,11 +926,11 @@
 @keyframes inputErrorFlash {
     0%, 100% {
         border-color: var(--brand-accent);
-        background-color: var(--brand-surface-2);
+        background-color: #fffdfc;
     }
     50% {
-        border-color: #ff6b6b;
-        background-color: #3a1c1e;
+        border-color: #c45c4a;
+        background-color: #f8e8e4;
         transform: scale(1.02);
     }
 }

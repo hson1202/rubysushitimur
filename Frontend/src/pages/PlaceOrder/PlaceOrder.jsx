@@ -47,6 +47,11 @@ const PlaceOrder = () => {
 
   const isDelivery = fulfillmentType === 'delivery';
 
+  useEffect(() => {
+    document.body.classList.add('pattern-route')
+    return () => document.body.classList.remove('pattern-route')
+  }, [])
+
   const formatPrice = (price) => formatHuf(price);
 
   // Helper function to check if box fee is disabled for an item
@@ -668,7 +673,7 @@ const PlaceOrder = () => {
   const isRestaurantClosed = restaurantOpenStatus && !restaurantOpenStatus.isOpen;
 
   return (
-    <>
+    <div className="place-order-page">
       <form onSubmit={placeOrder} className="place-order">
         {isRestaurantClosed && (
           <div className="restaurant-closed-order-notice" role="alert">
@@ -1079,7 +1084,7 @@ const PlaceOrder = () => {
         items={orderSuccessData.items}
         setCartItems={setCartItems}
       />
-    </>
+    </div>
   );
 };
 

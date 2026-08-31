@@ -20,18 +20,18 @@ const Header = () => {
 
   return (
     <div className='header'>
-        <div className='header-contents'>
-            <h2>{headline}</h2>
-            <p>{subtext}</p>
-            <div className="header-buttons">
-              <Link to='/menu'>
-                <button className="view-menu-btn">{t('header.viewMenu', 'View Menu')}</button>
-              </Link>
-              <a href={config.EXTERNAL_LINKS.RESERVATION}>
-                <button className="booking-btn">{t('header.bookTable', 'Book a Table')}</button>
-              </a>
-            </div>
+      <div className='header-contents'>
+        <h2>{headline}</h2>
+        <p>{subtext}</p>
+        <div className="header-buttons">
+          <Link to='/menu'>
+            <button className="view-menu-btn">{t('header.viewMenu', 'View Menu')}</button>
+          </Link>
+          <a href={config.EXTERNAL_LINKS.RESERVATION}>
+            <button className="booking-btn">{t('header.bookTable', 'Book a Table')}</button>
+          </a>
         </div>
+      </div>
     </div>
   )
 }

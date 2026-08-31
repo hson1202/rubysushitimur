@@ -67,27 +67,27 @@ const Home = () => {
 
   return (
     <div>
-      <Header/>
-      <ExploreMenu 
-        category={category} 
-        setCategory={setCategory} 
+      <Header />
+      <ExploreMenu
+        category={category}
+        setCategory={setCategory}
         categories={categories}
         loading={loading}
       />
-      
+
       {/* Menu Hôm Nay - Món Ăn Theo Khung Giờ */}
       <TodaySpecialMenu />
-      
-      <FoodDisplay category={category} onViewDetails={handleViewDetails}/>
-      
+
+      <FoodDisplay category={category} onViewDetails={handleViewDetails} />
+
       {/* Product Detail Popup */}
       {selectedProduct && (
-        <ProductDetail 
-          product={selectedProduct} 
+        <ProductDetail
+          product={selectedProduct}
           onClose={closeProductDetail}
         />
       )}
-      
+
       {/* About Us Section */}
       <div className='about-us-section' id='about-us'>
         {/* Hero Section */}
@@ -161,7 +161,7 @@ const Home = () => {
             </div>
             <div className="section-image">
               <div className="image-placeholder">
-                <img 
+                <img
                   src={IMAGES.story}
                   alt="Our Story - Family Kitchen"
                   className="section-img"
@@ -176,7 +176,7 @@ const Home = () => {
           <div className="section-content reverse">
             <div className="section-image">
               <div className="image-placeholder">
-                <img 
+                <img
                   src={IMAGES.mission}
                   alt="Our Mission - Authentic Flavors"
                   className="section-img"
@@ -255,7 +255,7 @@ const Home = () => {
             <div className="team-member">
               <div className="member-image">
                 <div className="image-placeholder">
-                  <img 
+                  <img
                     src={IMAGES.team.chef}
                     alt="Chef Minh"
                     className="member-img"
@@ -269,7 +269,7 @@ const Home = () => {
             <div className="team-member">
               <div className="member-image">
                 <div className="image-placeholder">
-                  <img 
+                  <img
                     src={IMAGES.team.manager}
                     alt="Ms. Linh"
                     className="member-img"
@@ -284,7 +284,7 @@ const Home = () => {
               <div className="member-image">
                 <div className="image-placeholder">
                   <div className="image-placeholder">
-                    <img 
+                    <img
                       src={IMAGES.team.operations}
                       alt="Mr. An"
                       className="member-img"
@@ -321,7 +321,7 @@ const Home = () => {
                 src={restaurantInfo.googleMapsUrl}
                 width="100%"
                 height="450"
-                style={{border:0}}
+                style={{ border: 0 }}
                 allowFullScreen=""
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

@@ -511,3 +511,62 @@
         font-size: 13px;
     }
 }
+
+/* Light Japandi navbar on Menu / PlaceOrder */
+body.pattern-route .navbar-wrapper {
+    background-color: #fffdfc;
+    border-bottom: 1px solid #d8cdbb;
+}
+
+body.pattern-route .navbar-menu {
+    color: #756e63;
+}
+
+body.pattern-route .navbar-menu a:hover,
+body.pattern-route .navbar .active {
+    color: #a33a32;
+}
+
+body.pattern-route .navbar .active {
+    border-bottom-color: #a33a32;
+}
+
+body.pattern-route .navbar button {
+    color: #a33a32;
+    border-color: #a33a32;
+}
+
+body.pattern-route .navbar button:hover {
+    background-color: #a33a32;
+    color: #fffdfc;
+}
+
+body.pattern-route .navbar-user-name {
+    color: #282621;
+}
+
+body.pattern-route .hamburger-menu:hover,
+body.pattern-route .hamburger-menu.active {
+    background: rgba(163, 58, 50, 0.08) !important;
+}
+
+body.pattern-route .hamburger-menu span {
+    background: #282621 !important;
+}
+
+body.pattern-route .language-button {
+    background: #f7f3ea;
+    border-color: #d8cdbb;
+    color: #282621;
+    box-shadow: none;
+}
+
+body.pattern-route .language-button:hover {
+    background: #fffdfc;
+    border-color: #c9b79d;
+    box-shadow: 0 2px 6px rgba(71, 59, 45, 0.08);
+}
+
+body.pattern-route .language-code {
+    color: #282621;
+}

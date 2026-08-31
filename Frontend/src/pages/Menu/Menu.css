@@ -1,32 +1,50 @@
 :root {
-  --menu-bg: #0b0b0c;
-  --menu-card: #161617;
-  --menu-card-2: #1c1c1e;
-  --menu-border: #2a2a2c;
-  --menu-text: #f4f4f5;
-  --menu-muted: #9a9a9e;
-  --menu-accent: #e23744;
-  --menu-radius: 16px;
-  --menu-radius-small: 12px;
   --menu-topbar-h: 58px;
 }
 
+/* Sushi doodle pattern on the outer gutters (body around .app) */
+body.pattern-route {
+  background-color: #fffdfc;
+  background-image: url('https://pub-e3da109533764cb29410b35fc1bd8b42.r2.dev/Background/ea67e05b-fe6e-4897-b5a3-30c1e8ca1b31.png');
+  background-repeat: repeat;
+  background-position: top center;
+  background-size: 720px auto;
+}
+
 .menu-page {
-  background: var(--menu-bg);
+  --menu-bg: #f7f3ea;
+  --menu-sidebar-bg: #efe6d6;
+  --menu-content-bg: #fbf8f1;
+  --menu-card: #fffdfc;
+  --menu-card-2: #f3ece0;
+  --menu-border: #d8cdbb;
+  --menu-text: #282621;
+  --menu-muted: #756e63;
+  --menu-accent: #a33a32;
+  --menu-radius: 16px;
+  --menu-radius-small: 12px;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(163, 58, 50, 0.04), transparent 28rem),
+    radial-gradient(ellipse at 92% 18%, rgba(216, 205, 187, 0.45), transparent 22rem),
+    linear-gradient(180deg, rgba(255, 253, 252, 0.35), transparent 18rem),
+    var(--menu-bg);
   padding-bottom: 32px;
   min-height: 100vh;
   position: relative;
   color: var(--menu-text);
+  box-shadow:
+    0 0 0 1px rgba(216, 205, 187, 0.7),
+    0 18px 48px rgba(71, 59, 45, 0.08);
 }
 
-/* ===== Two-pane shell (Ruby Sushi style) ===== */
+/* ===== Two-pane shell (Ruby Sushi structure, Japandi surfaces) ===== */
 .menu-shell {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 32px) 80px;
   display: flex;
   align-items: flex-start;
-  gap: 40px;
+  gap: clamp(24px, 3vw, 40px);
 }
 
 .menu-shell.no-sidebar {
@@ -48,9 +66,11 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   z-index: 50;
-  background: var(--menu-bg);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 252, 0.28), transparent 8rem),
+    var(--menu-sidebar-bg);
   border: none;
-  border-right: 1px solid rgba(245, 245, 245, 0.06);
+  border-right: 1px solid var(--menu-border);
   border-radius: 0;
   padding: 0;
 }
@@ -73,7 +93,9 @@
 .menu-content {
   flex: 1;
   min-width: 0;
-  padding-top: 0;
+  padding: 12px 0 8px;
+  background: var(--menu-content-bg);
+  border-radius: 0;
 }
 
 .menu-sections-container {
@@ -86,7 +108,7 @@
 .menu-categories-list {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: clamp(24px, 3vw, 32px);
 }
 
 .menu-parent-section {
@@ -110,7 +132,7 @@
 
 .menu-parent-name {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: clamp(1.35rem, 2vw, 1.6rem);
   font-weight: 700;
   color: var(--menu-text);
   letter-spacing: -0.01em;
@@ -123,44 +145,59 @@
   border-radius: 0;
   box-shadow: none;
   scroll-margin-top: var(--menu-topbar-h);
+  padding-top: 4px;
 }
 
 .menu-category-header {
-  background: transparent;
-  border-radius: 0;
-  margin-bottom: 14px;
-  padding-bottom: 0;
-  border-bottom: none;
+  background: linear-gradient(90deg, rgba(163, 58, 50, 0.06), transparent 72%);
+  border-radius: 0 10px 10px 0;
+  margin-bottom: 8px;
+  padding: 10px 0 10px 16px;
+  border-bottom: 1px solid rgba(216, 205, 187, 0.7);
+  border-left: 3px solid var(--menu-accent);
+  position: relative;
 }
 
 .menu-category-name {
-  margin: 0 0 4px 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  margin: 0 0 2px 0;
+  font-size: clamp(1rem, 1.4vw, 1.1rem);
+  font-weight: 800;
   color: var(--menu-text);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .menu-category-description {
   margin: 0;
   color: var(--menu-muted);
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   line-height: 1.5;
+  font-style: italic;
 }
 
-/* Dish rows — flat list with line separators */
+/* Dish rows — soft shoji-separated cards */
 .menu-category-dishes {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
 }
 
 .menu-category-item {
-  border-bottom: 1px solid var(--menu-border);
+  overflow: hidden;
+  background: var(--menu-card);
+  border: 1px solid var(--menu-border);
+  border-radius: var(--menu-radius-small);
+  box-shadow: 0 4px 14px rgba(71, 59, 45, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-category-item:hover {
+  border-color: #c9b79d;
+  box-shadow: 0 8px 22px rgba(71, 59, 45, 0.08);
 }
 
 .menu-category-item:last-child {
-  border-bottom: none;
+  border-bottom-color: var(--menu-border);
 }
 
 /* ===== States ===== */
@@ -180,7 +217,7 @@
 .loading-container .loading-spinner {
   width: 42px;
   height: 42px;
-  border: 3px solid #2a2a2c;
+  border: 3px solid #ded5c6;
   border-top-color: var(--menu-accent);
   border-radius: 50%;
   margin: 0 0 20px;
@@ -201,7 +238,7 @@
 .reset-btn {
   border: 1px solid var(--menu-accent);
   background: transparent;
-  color: var(--menu-text);
+  color: var(--menu-accent);
   border-radius: 999px;
   padding: 10px 24px;
   font-weight: 600;
@@ -233,10 +270,9 @@
     flex-basis: 200px;
     width: 200px;
   }
-
 }
 
-/* ===== Mobile: narrow vertical sidebar + content (Ruby Sushi style) ===== */
+/* ===== Mobile: narrow vertical sidebar + content ===== */
 @media (max-width: 768px) {
   .menu-page {
     padding-bottom: 24px;
@@ -260,7 +296,8 @@
     overflow: hidden;
     touch-action: none;
     padding: 8px 0;
-    border-right: 1px solid rgba(245, 245, 245, 0.06);
+    border-right: 1px solid var(--menu-border);
+    background: var(--menu-sidebar-bg);
   }
 
   .menu-shell.no-sidebar .menu-sidebar {
@@ -270,7 +307,8 @@
   .menu-content {
     flex: 1;
     min-width: 0;
-    padding: 0 12px 0;
+    padding: 8px 14px 0;
+    background: var(--menu-content-bg);
   }
 
   .menu-categories-list {
@@ -294,6 +332,9 @@
     font-size: 1.1rem;
   }
 
+  .menu-category-dishes {
+    gap: 8px;
+  }
 }
 
 @media (max-width: 390px) {
@@ -303,6 +344,21 @@
   }
 
   .menu-content {
-    padding: 0 10px;
+    padding: 6px 10px 0;
+  }
+}
+
+@media (max-width: 320px) {
+  .menu-sidebar {
+    flex-basis: 68px;
+    width: 68px;
+  }
+
+  .menu-content {
+    padding: 6px 8px 0;
+  }
+
+  .menu-category-header {
+    padding: 8px 0 8px 12px;
   }
 }

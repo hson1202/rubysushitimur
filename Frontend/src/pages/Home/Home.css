@@ -17,7 +17,7 @@
   margin: 0 auto;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   background: var(--brand-surface);
 }
 
@@ -467,25 +467,25 @@
     text-align: center;
     gap: 40px;
   }
-  
+
   .hero-stats {
     justify-content: center;
   }
-  
+
   .section-content {
     flex-direction: column;
     gap: 50px;
     text-align: center;
   }
-  
+
   .section-content.reverse {
     flex-direction: column;
   }
-  
+
   .story-highlights {
     justify-content: center;
   }
-  
+
   .mission-goals {
     text-align: left;
   }
@@ -495,42 +495,42 @@
   .about-us-section {
     padding: 60px 0;
   }
-  
+
   .about-hero {
     padding: 0 15px;
   }
-  
+
   .about-section {
     padding: 60px 15px;
   }
-  
+
   .hero-stats {
     gap: 20px;
   }
-  
+
   .stat-item {
     padding: 15px;
   }
-  
+
   .stat-number {
     font-size: 2rem;
   }
-  
+
   .values-grid {
     grid-template-columns: 1fr;
     gap: 25px;
   }
-  
+
   .team-grid {
     grid-template-columns: 1fr;
     gap: 30px;
   }
-  
+
   .team-section {
     margin: 60px 15px;
     padding: 60px 20px;
   }
-  
+
   .about-cta {
     margin: 60px 15px;
     padding: 60px 20px;
@@ -541,40 +541,40 @@
   .about-us-section {
     padding: 40px 0;
   }
-  
+
   .about-hero {
     padding: 0 10px;
   }
-  
+
   .about-section {
     padding: 40px 10px;
   }
-  
+
   .hero-stats {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .story-highlights {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .highlight-item {
     justify-content: center;
   }
-  
+
   .goal-item {
     flex-direction: column;
     text-align: center;
     gap: 10px;
   }
-  
+
   .team-section {
     margin: 40px 10px;
     padding: 40px 15px;
   }
-  
+
   .about-cta {
     margin: 40px 10px;
     padding: 40px 15px;
