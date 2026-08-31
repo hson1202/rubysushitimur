@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
 import './PlaceOrder.css'
-import { StoreContext } from '../../Context/StoreContext'
+import { StoreContext, CHECKOUT_DRAFT_KEY } from '../../Context/StoreContext'
 import { useAuth } from '../../Context/AuthContext'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
@@ -12,38 +12,56 @@ import '../../i18n'
 import { formatHuf } from '../../utils/currency'
 import { generateOrderTimeSlots, normalizeWeeklyHours } from '../../utils/restaurantHours'
 
+const EMPTY_CONTACT = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  note: "",
+  preferredDeliveryTime: ""
+}
+
+const readCheckoutDraft = () => {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_DRAFT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch (error) {
+    console.error('Failed to read checkout draft:', error)
+    return null
+  }
+}
+
 const PlaceOrder = () => {
   const { t, i18n } = useTranslation();
-  const { getTotalCartAmount, food_list, cartItems, cartItemsData, url, setCartItems, boxFee, systemFee, restaurantInfo, restaurantOpenStatus } = useContext(StoreContext);
+  const { getTotalCartAmount, food_list, cartItems, cartItemsData, url, clearCart, boxFee, systemFee, restaurantInfo, restaurantOpenStatus } = useContext(StoreContext);
   const { token, isAuthenticated, user } = useAuth();
-  const [data, setData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    note: "",
-    preferredDeliveryTime: ""
-  })
+  const checkoutDraft = useRef(readCheckoutDraft()).current;
+  const [data, setData] = useState(() => ({
+    ...EMPTY_CONTACT,
+    ...(checkoutDraft?.data || {})
+  }))
   const [orderType, setOrderType] = useState(isAuthenticated ? 'registered' : 'guest');
-  const [fulfillmentType, setFulfillmentType] = useState('delivery');
+  const [fulfillmentType, setFulfillmentType] = useState(checkoutDraft?.fulfillmentType || 'delivery');
   // Hiện tại chỉ nhận tiền mặt - thẻ hiển thị nhưng bị khóa (chưa khả dụng)
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState(checkoutDraft?.paymentMethod || 'cash');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [orderSuccessData, setOrderSuccessData] = useState({});
   
   // Delivery state
-  const [deliveryInfo, setDeliveryInfo] = useState(null);
+  const [deliveryInfo, setDeliveryInfo] = useState(checkoutDraft?.deliveryInfo || null);
   const [restaurantLocation, setRestaurantLocation] = useState(null);
-  const [deliveryAddress, setDeliveryAddress] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState(checkoutDraft?.deliveryAddress || null);
   const [timeSlots, setTimeSlots] = useState([]);
   
   // User addresses state (for authenticated users)
   const [userAddresses, setUserAddresses] = useState([]);
   const [defaultAddressId, setDefaultAddressId] = useState(null);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [selectedAddressId, setSelectedAddressId] = useState(checkoutDraft?.selectedAddressId || null);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [useManualAddress, setUseManualAddress] = useState(false); // Track if user wants to enter address manually
+  const [useManualAddress, setUseManualAddress] = useState(checkoutDraft?.useManualAddress || false); // Track if user wants to enter address manually
 
   const isDelivery = fulfillmentType === 'delivery';
 
@@ -105,7 +123,12 @@ const PlaceOrder = () => {
     const slots = generateTimeSlots();
     setTimeSlots(slots);
     if (slots.length > 0) {
-      setData(prev => ({ ...prev, preferredDeliveryTime: slots[0] }));
+      setData(prev => {
+        if (prev.preferredDeliveryTime && slots.includes(prev.preferredDeliveryTime)) {
+          return prev;
+        }
+        return { ...prev, preferredDeliveryTime: slots[0] };
+      });
     } else {
       setData(prev => ({ ...prev, preferredDeliveryTime: '' }));
     }
@@ -143,15 +166,21 @@ const PlaceOrder = () => {
             setUserAddresses(addresses);
             setDefaultAddressId(response.data.defaultAddressId || null);
             
-            // If user has addresses, set selected address to default
-            if (addresses.length > 0) {
-              const defaultAddr = addresses.find(addr => 
+            // Keep a restored checkout address on refresh; otherwise pick the default saved address
+            if (addresses.length > 0 && !useManualAddress) {
+              const restoredAddr = checkoutDraft?.selectedAddressId
+                ? addresses.find(addr => addr._id === checkoutDraft.selectedAddressId)
+                : null;
+              const defaultAddr = restoredAddr || addresses.find(addr => 
                 addr._id === response.data.defaultAddressId || addr.isDefault
               ) || addresses[0];
               
               if (defaultAddr) {
+                if (checkoutDraft?.deliveryAddress || checkoutDraft?.selectedAddressId) {
+                  setSelectedAddressId(restoredAddr?._id || checkoutDraft.selectedAddressId || defaultAddr._id);
+                  return;
+                }
                 setSelectedAddressId(defaultAddr._id);
-                // Set delivery address from default address for order submission
                 setDeliveryAddress({
                   address: defaultAddr.street || '',
                   street: defaultAddr.street || '',
@@ -224,7 +253,7 @@ const PlaceOrder = () => {
     };
     
     fetchUserAddresses();
-  }, [isAuthenticated, token, url, restaurantLocation]);
+  }, [isAuthenticated, token, url]);
 
   // Simple retry helper for transient errors (e.g., 502/503/network)
   const postWithRetry = async (endpoint, data, options, retries = 2, delayMs = 800) => {
@@ -650,11 +679,38 @@ const PlaceOrder = () => {
   // Helper to check if any address has been selected (for warning condition)
   const hasAnyAddressSelected = isDelivery && (!!deliveryAddress?.address || !!selectedAddressId);
 
+  const hasCartItems = Object.values(cartItems || {}).some((qty) => Number(qty) > 0)
+
   useEffect(() => {
-    if (getTotalCartAmount() === 0 && !showSuccessPopup) {
+    if (showSuccessPopup) return
+    if (!hasCartItems) {
       navigate('/')
     }
-  }, [getTotalCartAmount, navigate, showSuccessPopup])
+  }, [hasCartItems, navigate, showSuccessPopup])
+
+  useEffect(() => {
+    if (showSuccessPopup) {
+      try {
+        sessionStorage.removeItem(CHECKOUT_DRAFT_KEY)
+      } catch (error) {
+        console.error('Failed to clear checkout draft:', error)
+      }
+      return
+    }
+    try {
+      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({
+        data,
+        fulfillmentType,
+        paymentMethod,
+        deliveryAddress,
+        deliveryInfo,
+        selectedAddressId,
+        useManualAddress
+      }))
+    } catch (error) {
+      console.error('Failed to save checkout draft:', error)
+    }
+  }, [data, fulfillmentType, paymentMethod, deliveryAddress, deliveryInfo, selectedAddressId, useManualAddress, showSuccessPopup])
 
   // Auto-focus first input on mobile
   useEffect(() => {
@@ -1082,7 +1138,7 @@ const PlaceOrder = () => {
         phone={orderSuccessData.phone}
         orderAmount={orderSuccessData.orderAmount}
         items={orderSuccessData.items}
-        setCartItems={setCartItems}
+        setCartItems={clearCart}
       />
     </div>
   );

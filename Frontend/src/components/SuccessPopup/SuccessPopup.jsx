@@ -1,18 +1,21 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import './SuccessPopup.css';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { StoreContext } from '../../Context/StoreContext';
 import '../../i18n';
 
 const SuccessPopup = ({ isOpen, onClose, setCartItems }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { clearCart } = useContext(StoreContext);
 
   if (!isOpen) return null;
 
   const handleClose = () => {
-    // Xóa cart khi đóng popup
-    if (setCartItems) {
+    if (clearCart) {
+      clearCart();
+    } else if (setCartItems) {
       setCartItems({});
     }
     onClose();

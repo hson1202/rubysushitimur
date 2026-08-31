@@ -44,7 +44,6 @@ const DeliveryAddressInput = ({
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState(null);
   const [deliveryInfo, setDeliveryInfo] = useState(null);
   const [error, setError] = useState('');
   const [isManualPickerOpen, setIsManualPickerOpen] = useState(false);
@@ -58,6 +57,7 @@ const DeliveryAddressInput = ({
       (data.coordinates?.latitude && data.coordinates?.longitude)
     )
   );
+  const [selectedAddress, setSelectedAddress] = useState(() => hasStructuredAddress(addressData) ? addressData : null);
 
   // 4 ô chi tiết ẩn lúc đầu — chỉ hiện sau khi chọn gợi ý / geocode / ghim bản đồ
   const [showDetailFields, setShowDetailFields] = useState(() => hasStructuredAddress(addressData));

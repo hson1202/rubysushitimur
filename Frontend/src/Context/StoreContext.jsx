@@ -4,14 +4,34 @@ import config from "../config/config"
 import i18n from "../i18n"
 import { getRestaurantStatus, normalizeWeeklyHours, isRestaurantOpen } from "../utils/restaurantHours"
 
+export const CART_ITEMS_KEY = "ruby_cart_items"
+export const CART_DATA_KEY = "ruby_cart_items_data"
+export const CHECKOUT_DRAFT_KEY = "ruby_checkout_draft"
+
+const readJsonStorage = (key, fallback) => {
+    try {
+        const raw = localStorage.getItem(key)
+        if (!raw) return fallback
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed
+        }
+    } catch (error) {
+        console.error("Failed to read stored cart:", error)
+    }
+    return fallback
+}
+
+const hasCartQuantities = (items) =>
+    Object.values(items || {}).some((qty) => Number(qty) > 0)
 
 export const StoreContext= createContext(null)
 
 const StoreContextProvider =(props)=>{
 
     
-    const [cartItems,setCartItems] = useState({});  
-    const [cartItemsData, setCartItemsData] = useState({}); // Store full item data including options
+    const [cartItems,setCartItems] = useState(() => readJsonStorage(CART_ITEMS_KEY, {}));
+    const [cartItemsData, setCartItemsData] = useState(() => readJsonStorage(CART_DATA_KEY, {})); // Store full item data including options
     const url = config.BACKEND_URL
     const [token,setToken]=useState("")
     const [food_list,setFoodList]=useState([]);
@@ -218,14 +238,40 @@ const StoreContextProvider =(props)=>{
         }
     }
     
+    const persistCart = (items, data) => {
+        try {
+            localStorage.setItem(CART_ITEMS_KEY, JSON.stringify(items || {}))
+            localStorage.setItem(CART_DATA_KEY, JSON.stringify(data || {}))
+        } catch (error) {
+            console.error('Failed to persist cart:', error)
+        }
+    }
+
+    const clearCart = useCallback(() => {
+        setCartItems({})
+        setCartItemsData({})
+        try {
+            localStorage.removeItem(CART_ITEMS_KEY)
+            localStorage.removeItem(CART_DATA_KEY)
+            sessionStorage.removeItem(CHECKOUT_DRAFT_KEY)
+        } catch (error) {
+            console.error('Failed to clear stored cart:', error)
+        }
+    }, [])
+
     const loadCartData = async (token) => {
         try {
             const response = await axios.post(url+"/api/cart/get",{},{headers:{token}});
-            setCartItems(response.data.cartData);
+            const remoteCart = response.data.cartData || {};
+            setCartItems((prev) => {
+                // Local cart (with options / guest items) is the source of truth on refresh.
+                if (hasCartQuantities(prev)) return prev;
+                if (hasCartQuantities(remoteCart)) return remoteCart;
+                return prev;
+            });
         } catch (error) {
             console.error('Error loading cart data:', error);
-            // If cart load fails, clear cart items
-            setCartItems({});
+            // Keep the locally restored cart if the backend cart cannot be loaded.
         }
     }
 
@@ -270,10 +316,9 @@ const StoreContextProvider =(props)=>{
                     await loadCartData(localToken);
                 } else {
                     console.log('❌ Token is invalid or expired, clearing...');
-                    // Token is invalid or expired, clear it
+                    // Token is invalid or expired, clear it — keep the local cart
                     localStorage.removeItem("token");
                     setToken("");
-                    setCartItems({});
                 }
             } else {
                 console.log('ℹ️ No token found in localStorage');
@@ -281,6 +326,33 @@ const StoreContextProvider =(props)=>{
         }
         loadData();
     },[])
+
+    useEffect(() => {
+        persistCart(cartItems, cartItemsData)
+    }, [cartItems, cartItemsData])
+
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === CART_ITEMS_KEY && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue)
+                    if (parsed && typeof parsed === "object") setCartItems(parsed)
+                } catch (error) {
+                    console.error('Failed to sync cart items from another tab:', error)
+                }
+            }
+            if (e.key === CART_DATA_KEY && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue)
+                    if (parsed && typeof parsed === "object") setCartItemsData(parsed)
+                } catch (error) {
+                    console.error('Failed to sync cart data from another tab:', error)
+                }
+            }
+        }
+        window.addEventListener("storage", handleStorageChange)
+        return () => window.removeEventListener("storage", handleStorageChange)
+    }, [])
 
     useEffect(() => {
         updateRestaurantOpenStatus(restaurantInfo);
@@ -303,7 +375,9 @@ const StoreContextProvider =(props)=>{
         food_list,  
         cartItems,  
         cartItemsData,
-        setCartItems,  
+        setCartItems,
+        setCartItemsData,
+        clearCart,
         addToCart,  
         removeFromCart,
         getTotalCartAmount,
