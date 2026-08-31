@@ -13,7 +13,7 @@ body.pattern-route {
 
 .menu-page {
   --menu-bg: #f7f3ea;
-  --menu-sidebar-bg: #efe6d6;
+  --menu-sidebar-bg: #d6be95;
   --menu-content-bg: #fbf8f1;
   --menu-card: #fffdfc;
   --menu-card-2: #f3ece0;
@@ -67,7 +67,7 @@ body.pattern-route {
   -ms-overflow-style: none;
   z-index: 50;
   background:
-    linear-gradient(180deg, rgba(255, 253, 252, 0.28), transparent 8rem),
+    linear-gradient(180deg, rgba(255, 253, 252, 0.14), transparent 8rem),
     var(--menu-sidebar-bg);
   border: none;
   border-right: 1px solid var(--menu-border);
