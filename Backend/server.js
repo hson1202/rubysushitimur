@@ -39,24 +39,11 @@ app.set("trust proxy", 1)
 // --- HTTP security headers ---
 app.use(helmet())
 
-// --- CORS cấu hình an toàn hơn ---
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.ADMIN_URL
-].filter(Boolean)
-
+// --- CORS: FE chính + FE phụ + Admin đều gọi được 1 BE ---
+// origin: true = echo Origin của request, không 500, không khóa FE khi thêm env.
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Cho phép request từ server nội bộ / tool (origin === undefined)
-      if (!origin) return callback(null, true)
-
-      if (!allowedOrigins.length || allowedOrigins.includes(origin)) {
-        return callback(null, true)
-      }
-
-      return callback(new Error("Not allowed by CORS"))
-    },
+    origin: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true
   })

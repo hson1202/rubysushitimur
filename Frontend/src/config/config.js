@@ -1,8 +1,15 @@
 // Configuration file for backend URLs
+const normalizeBackendUrl = (url) => {
+  if (!url) return url;
+  const trimmed = String(url).trim().replace(/\/$/, '');
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 const getBackendUrl = () => {
   // Always prioritize VITE_BACKEND_URL from environment variables
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+    return normalizeBackendUrl(import.meta.env.VITE_BACKEND_URL);
   }
   
   // If no env variable, use defaults based on mode
