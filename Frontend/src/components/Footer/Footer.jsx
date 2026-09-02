@@ -7,7 +7,7 @@ import { StoreContext } from '../../Context/StoreContext'
 import config from '../../config/config'
 import { formatWeeklyHoursDisplay, normalizeWeeklyHours } from '../../utils/restaurantHours'
 
-const Footer = () => {
+const Footer = ({ setShowDeliveryInfo }) => {
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const { restaurantInfo, restaurantInfoLoading: loading } = useContext(StoreContext)
@@ -58,6 +58,11 @@ const Footer = () => {
               <li><a href={config.EXTERNAL_LINKS.HOME}>{t('footer.home') || 'Home'}</a></li>
               <li><a href={config.EXTERNAL_LINKS.ABOUT}>{t('footer.aboutUs') || 'About Us'}</a></li>
               <li><a href='/menu'>{t('nav.menu')}</a></li>
+              <li>
+                <button type="button" className="footer-text-link" onClick={() => setShowDeliveryInfo(true)}>
+                  {t('nav.deliveryInfo')}
+                </button>
+              </li>
               <li><a href='/blog'>{t('footer.blog') || 'Blog'}</a></li>
             </ul>
           </div>

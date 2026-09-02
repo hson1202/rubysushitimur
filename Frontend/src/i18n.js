@@ -64,6 +64,10 @@ const resources = {
       'nav.trackOrder': 'Dò Đơn Hàng',
       'nav.booking': 'Đặt bàn',
       'nav.toggleMenu': 'Mở / đóng menu',
+      'nav.deliveryInfo': 'Thông tin giao hàng',
+      'deliveryInfo.loading': 'Đang tải thông tin giao hàng...',
+      'deliveryInfo.loadError': 'Không thể tải thông tin giao hàng. Vui lòng thử lại sau.',
+      'common.close': 'Đóng',
 
       // Menu
       'menu.explore': 'Khám phá thực đơn của chúng tôi',
@@ -739,6 +743,10 @@ const resources = {
       'nav.trackOrder': 'Track Order',
       'nav.booking': 'Booking',
       'nav.toggleMenu': 'Toggle menu',
+      'nav.deliveryInfo': 'Delivery Information',
+      'deliveryInfo.loading': 'Loading delivery information...',
+      'deliveryInfo.loadError': 'Could not load delivery information. Please try again later.',
+      'common.close': 'Close',
 
       // Menu
       'menu.explore': 'Explore our menu',
@@ -1416,6 +1424,10 @@ const resources = {
       'nav.trackOrder': 'Rendelés követése',
       'nav.booking': 'Asztalfoglalás',
       'nav.toggleMenu': 'Menü ki/be',
+      'nav.deliveryInfo': 'HÁZHOZ SZÁLLÍTÁSI INFORMÁCIÓK',
+      'deliveryInfo.loading': 'Szállítási információk betöltése...',
+      'deliveryInfo.loadError': 'A szállítási információk betöltése sikertelen. Kérjük, próbálja újra később.',
+      'common.close': 'Bezárás',
 
       // Menu
       'menu.explore': 'Fedezze fel menünket',

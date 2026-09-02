@@ -9,6 +9,7 @@ import Cart from './pages/Cart/Cart'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder';
 import Footer from './components/Footer/Footer';
 import LoginPopup from'./components/LoginPopup/LoginPopup';
+import DeliveryInfoPopup from './components/DeliveryInfoPopup/DeliveryInfoPopup';
 import MyOrders from './pages/MyOrders/MyOrders'
 import TrackOrder from './pages/TrackOrder/TrackOrder'
 import Admin from './pages/Admin/Admin'
@@ -28,6 +29,7 @@ import { StoreContext } from './Context/StoreContext';
 const App = () => {
 
   const [showLogin,setShowLogin]=useState(false)
+  const [showDeliveryInfo, setShowDeliveryInfo] = useState(false)
   const { restaurantInfo } = useContext(StoreContext);
 
   // Dynamically update browser tab title and favicon from admin settings
@@ -86,7 +88,8 @@ const App = () => {
   return (
     <>
     {showLogin?<LoginPopup setShowLogin={setShowLogin}/>:<></>}
-    <Navbar setShowLogin={setShowLogin}/>
+    {showDeliveryInfo ? <DeliveryInfoPopup setShowDeliveryInfo={setShowDeliveryInfo} /> : null}
+    <Navbar setShowLogin={setShowLogin} setShowDeliveryInfo={setShowDeliveryInfo}/>
     <RestaurantClosedBanner />
     <div className='app'>
       <Routes>
@@ -122,7 +125,7 @@ const App = () => {
 
       </Routes>
     </div>
-    <Footer/>
+    <Footer setShowDeliveryInfo={setShowDeliveryInfo}/>
     <FloatingCartBtn />
     </>
   )

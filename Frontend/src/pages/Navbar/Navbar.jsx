@@ -11,7 +11,7 @@ import config from '../../config/config'
 import { getOptimizedImageUrl } from '../../utils/imageUtils'
 
 
-const Navbar = ({ setShowLogin }) => {
+const Navbar = ({ setShowLogin, setShowDeliveryInfo }) => {
     
     const { t } = useTranslation();
     const [menu,setMenu]=useState("home");
@@ -61,6 +61,12 @@ const Navbar = ({ setShowLogin }) => {
         setShowLogin(true);
         setIsMobileMenuOpen(false);
     };
+
+    const handleDeliveryInfoClick = (event) => {
+        event.preventDefault();
+        setShowDeliveryInfo(true);
+        setIsMobileMenuOpen(false);
+    };
   
     return (
         <div className='navbar-wrapper'>
@@ -85,6 +91,9 @@ const Navbar = ({ setShowLogin }) => {
             {/* Desktop Menu */}
             <ul className='navbar-menu desktop-menu'>
                 <Link to='/menu' onClick={()=>setMenu("menu")} className={menu==="menu"?"active":""}>{t('nav.menu')}</Link>
+                <button type="button" className="navbar-text-link" onClick={handleDeliveryInfoClick}>
+                    {t('nav.deliveryInfo')}
+                </button>
                 {isAuthenticated && user?.role === 'admin' && (
                     <Link
                         to='/admin'
@@ -100,6 +109,9 @@ const Navbar = ({ setShowLogin }) => {
             <div className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}>
                 <ul className='navbar-menu mobile-menu'>
                     <Link to='/menu' onClick={() => handleNavLinkClick("menu")} className={menu==="menu"?"active":""}>{t('nav.menu')}</Link>
+                    <button type="button" className="navbar-text-link" onClick={handleDeliveryInfoClick}>
+                        {t('nav.deliveryInfo')}
+                    </button>
                     
                     {/* Account Section in Mobile Menu */}
                     <div className="mobile-account-section">
@@ -204,6 +216,7 @@ const Navbar = ({ setShowLogin }) => {
 
 Navbar.propTypes = {
     setShowLogin: PropTypes.func.isRequired,
+    setShowDeliveryInfo: PropTypes.func.isRequired,
 }
 
 export default Navbar

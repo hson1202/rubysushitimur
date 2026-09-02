@@ -22,6 +22,7 @@ const spaRoutes = [
   'admin/reservations',
   'admin/delivery-zones',
   'admin/restaurant-info',
+  'admin/delivery-info',
   'admin/messages',
   'admin/email-test',
   'admin/error-logs'

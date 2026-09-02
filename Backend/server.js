@@ -23,6 +23,7 @@ import cloudinarySignRouter from "./routes/cloudinarySignRoute.js"
 import emailTestRouter from "./routes/emailTestRoute.js"
 import deliveryRouter from "./routes/deliveryRoute.js"
 import restaurantInfoRouter from "./routes/restaurantInfoRoutes.js"
+import pageContentRouter from "./routes/pageContentRoute.js"
 import errorLogRouter from "./routes/errorLogRoute.js"
 import allergenRouter from "./routes/allergenRoute.js"
 import eventBus from "./services/eventBus.js"
@@ -146,6 +147,7 @@ app.use("/api/upload-cloud", uploadRouter)  // Keep Cloudinary as backup
 app.use("/api/cloudinary", cloudinarySignRouter)
 app.use("/api/delivery", deliveryRouter)
 app.use("/api/restaurant-info", restaurantInfoRouter)
+app.use("/api/page-content", pageContentRouter)
 app.use("/api/error-logs", errorLogRouter)
 app.use("/api/allergen", allergenRouter)
 
