@@ -430,15 +430,17 @@ const ProductDetail = ({ product, onClose }) => {
                 <button 
                   className="qty-btn decrease"
                   onClick={handleRemoveFromCart}
+                  aria-label={t('food.decrease')}
                 >
-                  <img src={assets.remove_icon_red} alt="" />
+                  −
                 </button>
                 <span className="quantity">{getCartQuantity()}</span>
                 <button 
                   className="qty-btn increase"
                   onClick={handleIncreaseQuantity}
+                  aria-label={t('food.increase')}
                 >
-                  <img src={assets.add_icon_green} alt="" />
+                  +
                 </button>
               </div>
             )}
