@@ -57,12 +57,22 @@ const placeOrder = async (req, res) => {
             });
         }
 
-        if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
+        if (!customerInfo || !customerInfo.name || !customerInfo.phone || !customerInfo.email) {
             return res.status(400).json({
                 success: false,
                 message: "Customer information is required"
             });
         }
+
+        const customerEmail = String(customerInfo.email).trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(customerEmail)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a valid email address"
+            });
+        }
+        customerInfo.email = customerEmail;
 
         // Extract deliveryInfo from request body if provided
         const { deliveryInfo } = req.body;

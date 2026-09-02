@@ -332,8 +332,15 @@ const PlaceOrder = () => {
     }
 
     // Validate required fields
-    if (!data.firstName || !data.lastName || !data.phone) {
+    const email = (data.email || '').trim();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!data.firstName || !data.lastName || !data.phone || !email) {
       alert(t('placeOrder.errors.requiredFields'));
+      setIsSubmitting(false);
+      return;
+    }
+    if (!isValidEmail) {
+      alert(t('placeOrder.errors.invalidEmail'));
       setIsSubmitting(false);
       return;
     }
@@ -385,7 +392,7 @@ const PlaceOrder = () => {
     const customerInfo = {
       name: `${data.firstName} ${data.lastName}`,
       phone: data.phone,
-      email: data.email || undefined
+      email
     };
 
     const deliveryFee = getDeliveryFee();
@@ -940,6 +947,7 @@ const PlaceOrder = () => {
               />
             </div>
             <input 
+              required
               name='email' 
               onChange={onChangeHandler} 
               value={data.email} 

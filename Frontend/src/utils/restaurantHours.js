@@ -276,7 +276,9 @@ export const generateOrderTimeSlots = (weeklyHours, now = new Date()) => {
   const openMinutes = timeToMinutes(hours.openTime)
   const closeMinutes = timeToMinutes(hours.closeTime)
   const currentMinutes = restaurantNow.hour * 60 + restaurantNow.minute
+  // Earliest slot is 30 minutes from now (or opening time), then round up to :00 / :30
   let slotMinutes = Math.max(currentMinutes + 30, openMinutes)
+  slotMinutes = Math.ceil(slotMinutes / 30) * 30
 
   if (slotMinutes >= closeMinutes) return []
 
