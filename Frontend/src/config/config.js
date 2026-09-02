@@ -54,9 +54,9 @@ const config = {
 
   // Main Ruby Sushi website (order app links out for non-order pages)
   EXTERNAL_LINKS: {
-    HOME: 'https://budaors.rubysushi.hu/',
-    ABOUT: 'https://budaors.rubysushi.hu/Home/About',
-    RESERVATION: 'https://budaors.rubysushi.hu/Home/Booking',
+    HOME: 'https://timur.rubysushi.hu/',
+    ABOUT: 'https://timur.rubysushi.hu/',
+    RESERVATION: 'https://timur.rubysushi.hu/#onlinereservation',
   },
 };
 
