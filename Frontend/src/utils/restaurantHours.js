@@ -84,6 +84,25 @@ const timeToMinutes = (timeStr) => {
   return h * 60 + (m || 0)
 }
 
+const formatMinutes = (totalMinutes) => {
+  const hour = Math.floor(totalMinutes / 60)
+  const minute = totalMinutes % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+// Inclusive :00 / :30 slots from open through close (close 21:00 → last slot 21:00).
+const buildHalfHourSlots = (openTime, closeTime) => {
+  if (!openTime || !closeTime) return []
+  let slotMinutes = Math.ceil(timeToMinutes(openTime) / 30) * 30
+  const closeMinutes = timeToMinutes(closeTime)
+  const slots = []
+  while (slotMinutes <= closeMinutes) {
+    slots.push(formatMinutes(slotMinutes))
+    slotMinutes += 30
+  }
+  return slots
+}
+
 const getDaySchedule = (weeklyHours, date) => {
   const normalized = normalizeWeeklyHours(weeklyHours)
   const { dayIndex } = getRestaurantDateParts(date)
@@ -251,20 +270,8 @@ export const getHoursForDate = (weeklyHours, date) => {
 
 export const generateTimeSlotsForDate = (weeklyHours, date) => {
   const hours = getHoursForDate(weeklyHours, new Date(date))
-  if (hours.isClosed) return []
-
-  const slots = []
-  const startHour = hours.start
-  const endHour = hours.end
-
-  for (let hour = startHour; hour < endHour; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`)
-    if (hour < endHour - 1) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`)
-    }
-  }
-
-  return slots
+  if (hours.isClosed || !hours.openTime || !hours.closeTime) return []
+  return buildHalfHourSlots(hours.openTime, hours.closeTime)
 }
 
 export const generateOrderTimeSlots = (weeklyHours, now = new Date()) => {
@@ -274,22 +281,12 @@ export const generateOrderTimeSlots = (weeklyHours, now = new Date()) => {
 
   const restaurantNow = getRestaurantDateParts(now)
   const openMinutes = timeToMinutes(hours.openTime)
-  const closeMinutes = timeToMinutes(hours.closeTime)
   const currentMinutes = restaurantNow.hour * 60 + restaurantNow.minute
-  // Earliest slot is 30 minutes from now (or opening time), then round up to :00 / :30
-  let slotMinutes = Math.max(currentMinutes + 30, openMinutes)
-  slotMinutes = Math.ceil(slotMinutes / 30) * 30
+  // Earliest slot is 30 minutes from now (or opening time), rounded up to :00 / :30.
+  const earliestMinutes = Math.ceil(Math.max(currentMinutes + 30, openMinutes) / 30) * 30
 
-  if (slotMinutes >= closeMinutes) return []
-
-  const slots = []
-  while (slotMinutes < closeMinutes) {
-    const slotHour = Math.floor(slotMinutes / 60)
-    const slotMinute = slotMinutes % 60
-    slots.push(`${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`)
-    slotMinutes += 30
-  }
-  return slots
+  return buildHalfHourSlots(hours.openTime, hours.closeTime)
+    .filter((slot) => timeToMinutes(slot) >= earliestMinutes)
 }
 
 export const getDayLabels = (lang = 'vi') => DAY_LABELS[lang] || DAY_LABELS.vi

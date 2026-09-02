@@ -84,6 +84,25 @@ const timeToMinutes = (timeStr) => {
   return h * 60 + (m || 0)
 }
 
+const formatMinutes = (totalMinutes) => {
+  const hour = Math.floor(totalMinutes / 60)
+  const minute = totalMinutes % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+// Inclusive :00 / :30 slots from open through close (close 21:00 → last slot 21:00).
+const buildHalfHourSlots = (openTime, closeTime) => {
+  if (!openTime || !closeTime) return []
+  let slotMinutes = Math.ceil(timeToMinutes(openTime) / 30) * 30
+  const closeMinutes = timeToMinutes(closeTime)
+  const slots = []
+  while (slotMinutes <= closeMinutes) {
+    slots.push(formatMinutes(slotMinutes))
+    slotMinutes += 30
+  }
+  return slots
+}
+
 const getDaySchedule = (weeklyHours, date) => {
   const normalized = normalizeWeeklyHours(weeklyHours)
   const { dayIndex } = getRestaurantDateParts(date)
@@ -285,23 +304,11 @@ export const isTimeWithinBusinessHours = (weeklyHours, date, time) => {
   const openMinutes = timeToMinutes(schedule.openTime)
   const closeMinutes = timeToMinutes(schedule.closeTime)
 
-  return timeMinutes >= openMinutes && timeMinutes < closeMinutes
+  return timeMinutes >= openMinutes && timeMinutes <= closeMinutes
 }
 
 export const generateTimeSlotsForDate = (weeklyHours, date) => {
   const hours = getHoursForDate(weeklyHours, new Date(date))
-  if (hours.isClosed) return []
-
-  const slots = []
-  const startHour = hours.start
-  const endHour = hours.end
-
-  for (let hour = startHour; hour < endHour; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`)
-    if (hour < endHour - 1) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`)
-    }
-  }
-
-  return slots
+  if (hours.isClosed || !hours.openTime || !hours.closeTime) return []
+  return buildHalfHourSlots(hours.openTime, hours.closeTime)
 }

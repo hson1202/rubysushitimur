@@ -54,7 +54,6 @@ const PlaceOrder = () => {
   const [deliveryInfo, setDeliveryInfo] = useState(checkoutDraft?.deliveryInfo || null);
   const [restaurantLocation, setRestaurantLocation] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState(checkoutDraft?.deliveryAddress || null);
-  const [timeSlots, setTimeSlots] = useState([]);
   
   // User addresses state (for authenticated users)
   const [userAddresses, setUserAddresses] = useState([]);
@@ -112,16 +111,12 @@ const PlaceOrder = () => {
     setData(data => ({ ...data, [name]: value }))
   }
 
-  // Generate time slots within restaurant opening hours
-  const generateTimeSlots = () => {
-    const weeklyHours = normalizeWeeklyHours(restaurantInfo?.weeklyHours)
-    return generateOrderTimeSlots(weeklyHours)
-  }
+  const timeSlots = generateOrderTimeSlots(normalizeWeeklyHours(restaurantInfo?.weeklyHours))
+  const timeSlotsKey = timeSlots.join(',')
 
-  // Initialize time slots on mount and when restaurant hours change
+  // Keep the selected delivery time valid when restaurant hours / available slots change
   useEffect(() => {
-    const slots = generateTimeSlots();
-    setTimeSlots(slots);
+    const slots = timeSlotsKey ? timeSlotsKey.split(',') : []
     if (slots.length > 0) {
       setData(prev => {
         if (prev.preferredDeliveryTime && slots.includes(prev.preferredDeliveryTime)) {
@@ -130,9 +125,9 @@ const PlaceOrder = () => {
         return { ...prev, preferredDeliveryTime: slots[0] };
       });
     } else {
-      setData(prev => ({ ...prev, preferredDeliveryTime: '' }));
+      setData(prev => (prev.preferredDeliveryTime ? { ...prev, preferredDeliveryTime: '' } : prev));
     }
-  }, [restaurantInfo]);
+  }, [timeSlotsKey]);
 
   // Pre-fill user data if authenticated
   useEffect(() => {
