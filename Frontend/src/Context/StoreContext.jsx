@@ -22,8 +22,11 @@ const readJsonStorage = (key, fallback) => {
     return fallback
 }
 
-const hasCartQuantities = (items) =>
+export const hasCartQuantities = (items) =>
     Object.values(items || {}).some((qty) => Number(qty) > 0)
+
+export const hasStoredCartItems = () =>
+    hasCartQuantities(readJsonStorage(CART_ITEMS_KEY, {}))
 
 export const StoreContext= createContext(null)
 
@@ -253,6 +256,7 @@ const StoreContextProvider =(props)=>{
         try {
             localStorage.removeItem(CART_ITEMS_KEY)
             localStorage.removeItem(CART_DATA_KEY)
+            localStorage.removeItem(CHECKOUT_DRAFT_KEY)
             sessionStorage.removeItem(CHECKOUT_DRAFT_KEY)
         } catch (error) {
             console.error('Failed to clear stored cart:', error)

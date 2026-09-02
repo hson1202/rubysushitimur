@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/copy-spa-fallback.js",
+    "spa-fallback": "node scripts/copy-spa-fallback.js",
+    "vercel-build": "vite build && node scripts/copy-spa-fallback.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "vercel-build": "vite build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tinymce/tinymce-react": "^6.3.0",

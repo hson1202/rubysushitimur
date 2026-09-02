@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react'
 import './PlaceOrder.css'
-import { StoreContext, CHECKOUT_DRAFT_KEY } from '../../Context/StoreContext'
+import { StoreContext, CHECKOUT_DRAFT_KEY, hasStoredCartItems } from '../../Context/StoreContext'
 import { useAuth } from '../../Context/AuthContext'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
@@ -23,7 +23,7 @@ const EMPTY_CONTACT = {
 
 const readCheckoutDraft = () => {
   try {
-    const raw = sessionStorage.getItem(CHECKOUT_DRAFT_KEY)
+    const raw = localStorage.getItem(CHECKOUT_DRAFT_KEY) || sessionStorage.getItem(CHECKOUT_DRAFT_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return parsed && typeof parsed === 'object' ? parsed : null
@@ -680,17 +680,24 @@ const PlaceOrder = () => {
   const hasAnyAddressSelected = isDelivery && (!!deliveryAddress?.address || !!selectedAddressId);
 
   const hasCartItems = Object.values(cartItems || {}).some((qty) => Number(qty) > 0)
+  const [cartRestoreChecked, setCartRestoreChecked] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCartRestoreChecked(true), 400)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (showSuccessPopup) return
-    if (!hasCartItems) {
-      navigate('/')
-    }
-  }, [hasCartItems, navigate, showSuccessPopup])
+    if (hasCartItems || hasStoredCartItems()) return
+    if (!cartRestoreChecked) return
+    navigate('/')
+  }, [hasCartItems, cartRestoreChecked, navigate, showSuccessPopup])
 
   useEffect(() => {
     if (showSuccessPopup) {
       try {
+        localStorage.removeItem(CHECKOUT_DRAFT_KEY)
         sessionStorage.removeItem(CHECKOUT_DRAFT_KEY)
       } catch (error) {
         console.error('Failed to clear checkout draft:', error)
@@ -698,7 +705,7 @@ const PlaceOrder = () => {
       return
     }
     try {
-      sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({
+      localStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify({
         data,
         fulfillmentType,
         paymentMethod,
@@ -707,6 +714,7 @@ const PlaceOrder = () => {
         selectedAddressId,
         useManualAddress
       }))
+      sessionStorage.removeItem(CHECKOUT_DRAFT_KEY)
     } catch (error) {
       console.error('Failed to save checkout draft:', error)
     }

@@ -18,19 +18,69 @@ services:
     rootDir: Frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    headers:
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /order/index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /404.html
+        name: Cache-Control
+        value: no-cache
     routes:
+      - type: rewrite
+        source: /order
+        destination: /index.html
+      - type: rewrite
+        source: /order/*
+        destination: /index.html
+      - type: rewrite
+        source: /cart
+        destination: /index.html
+      - type: rewrite
+        source: /cart/*
+        destination: /index.html
+      - type: rewrite
+        source: /menu
+        destination: /index.html
+      - type: rewrite
+        source: /contact
+        destination: /index.html
+      - type: rewrite
+        source: /myorders
+        destination: /index.html
+      - type: rewrite
+        source: /track-order
+        destination: /index.html
+      - type: rewrite
+        source: /account
+        destination: /index.html
+      - type: rewrite
+        source: /account/*
+        destination: /index.html
       - type: rewrite
         source: /*
         destination: /index.html
 
-  # Admin service  
+  # Admin service
   - type: web
     name: food-delivery-admin
     env: static
     rootDir: Admin
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    headers:
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
     routes:
+      - type: rewrite
+        source: /admin
+        destination: /index.html
+      - type: rewrite
+        source: /admin/*
+        destination: /index.html
       - type: rewrite
         source: /*
         destination: /index.html
