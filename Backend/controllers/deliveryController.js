@@ -1,5 +1,6 @@
 import deliveryZoneModel from "../models/deliveryZoneModel.js";
 import restaurantLocationModel from "../models/restaurantLocationModel.js";
+import RestaurantInfo from "../models/restaurantInfoModel.js";
 import { extractAddressComponents, formatShortAddress, cleanDisplayName } from "../utils/addressFormat.js";
 import { resolveDelivery } from "../utils/deliveryCalculator.js";
 
@@ -43,6 +44,15 @@ const getDeliveryZones = async (req, res) => {
 // ========== CALCULATE DELIVERY FEE ==========
 const calculateDeliveryFee = async (req, res) => {
   try {
+    const restaurantInfo = await RestaurantInfo.getSingleton();
+    if (restaurantInfo.deliveryEnabled === false) {
+      return res.status(403).json({
+        success: false,
+        code: 'DELIVERY_DISABLED',
+        message: 'Tạm thời không giao hàng được'
+      });
+    }
+
     const { address, latitude, longitude } = req.body;
 
     const result = await resolveDelivery({ address, latitude, longitude });

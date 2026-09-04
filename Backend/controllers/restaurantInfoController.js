@@ -93,7 +93,8 @@ const updateRestaurantInfo = async (req, res) => {
       googleMapsUrl,
       copyrightText,
       translations,
-      isActive
+      isActive,
+      deliveryEnabled
     } = req.body || {}
 
     const updates = {}
@@ -119,6 +120,7 @@ const updateRestaurantInfo = async (req, res) => {
     if (copyrightText !== undefined) updates.copyrightText = copyrightText
     if (translations !== undefined) updates.translations = translations
     if (isActive !== undefined) updates.isActive = isActive
+    if (deliveryEnabled !== undefined) updates.deliveryEnabled = Boolean(deliveryEnabled)
 
     if (weeklyHours !== undefined) {
       const validation = validateWeeklyHours(weeklyHours)
@@ -191,6 +193,7 @@ const resetToDefaults = async (req, res) => {
     }
     info.copyrightText = ""
     info.isActive = true
+    info.deliveryEnabled = true
 
     await info.save()
 

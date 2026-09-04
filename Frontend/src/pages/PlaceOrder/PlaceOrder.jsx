@@ -35,7 +35,7 @@ const readCheckoutDraft = () => {
 
 const PlaceOrder = () => {
   const { t, i18n } = useTranslation();
-  const { getTotalCartAmount, food_list, cartItems, cartItemsData, url, clearCart, boxFee, systemFee, restaurantInfo, restaurantOpenStatus } = useContext(StoreContext);
+  const { getTotalCartAmount, food_list, cartItems, cartItemsData, url, clearCart, boxFee, systemFee, restaurantInfo, restaurantOpenStatus, deliveryEnabled } = useContext(StoreContext);
   const { token, isAuthenticated, user } = useAuth();
   const checkoutDraft = useRef(readCheckoutDraft()).current;
   const [data, setData] = useState(() => ({
@@ -63,6 +63,15 @@ const PlaceOrder = () => {
   const [useManualAddress, setUseManualAddress] = useState(checkoutDraft?.useManualAddress || false); // Track if user wants to enter address manually
 
   const isDelivery = fulfillmentType === 'delivery';
+
+  useEffect(() => {
+    if (deliveryEnabled || fulfillmentType !== 'delivery') return;
+    setFulfillmentType('pickup');
+    setDeliveryInfo(null);
+    setDeliveryAddress(null);
+    setSelectedAddressId(null);
+    setUseManualAddress(false);
+  }, [deliveryEnabled, fulfillmentType]);
 
   useEffect(() => {
     document.body.classList.add('pattern-route')
@@ -272,6 +281,11 @@ const PlaceOrder = () => {
 
     if (restaurantOpenStatus && !restaurantOpenStatus.isOpen) {
       alert(restaurantOpenStatus.message || t('restaurant.closedNow'));
+      return;
+    }
+
+    if (!deliveryEnabled && isDelivery) {
+      alert(t('placeOrder.errors.deliveryDisabled'));
       return;
     }
 
@@ -535,9 +549,16 @@ const PlaceOrder = () => {
         console.log('Error response:', error.response.data);
         const status = error.response.status;
         // Avoid showing backend English messages directly; show translated, user-friendly errors.
-        errorMessage = status >= 500
-          ? t('placeOrder.errors.serverError', { status })
-          : t('placeOrder.errors.general');
+        const errorCode = error.response.data?.code;
+        if (errorCode === 'DELIVERY_DISABLED') {
+          errorMessage = t('placeOrder.errors.deliveryDisabled');
+        } else if (errorCode === 'RESTAURANT_CLOSED') {
+          errorMessage = restaurantOpenStatus?.message || t('restaurant.closedNow');
+        } else {
+          errorMessage = status >= 500
+            ? t('placeOrder.errors.serverError', { status })
+            : t('placeOrder.errors.general');
+        }
       } else if (error.request) {
         // Network error
         errorMessage = t('placeOrder.errors.networkError');
@@ -771,19 +792,36 @@ const PlaceOrder = () => {
           {/* Fulfillment Type Selection */}
           <div className="fulfillment-type-section">
             <h3>{t('placeOrder.fulfillment.title')}</h3>
+            {!deliveryEnabled && (
+              <div className="delivery-unavailable-order-notice" role="status">
+                {t('placeOrder.fulfillment.deliveryDisabledNotice')}
+              </div>
+            )}
             <div className="fulfillment-type-options">
               {[
                 { value: 'pickup', title: t('placeOrder.fulfillment.pickupTitle'), desc: t('placeOrder.fulfillment.pickupDesc') },
-                { value: 'delivery', title: t('placeOrder.fulfillment.deliveryTitle'), desc: t('placeOrder.fulfillment.deliveryDesc') },
+                {
+                  value: 'delivery',
+                  title: t('placeOrder.fulfillment.deliveryTitle'),
+                  desc: deliveryEnabled
+                    ? t('placeOrder.fulfillment.deliveryDesc')
+                    : t('placeOrder.fulfillment.deliveryUnavailable'),
+                  disabled: !deliveryEnabled
+                },
               ].map((option) => (
-                <label key={option.value} className={`fulfillment-card ${fulfillmentType === option.value ? 'active' : ''}`}>
+                <label
+                  key={option.value}
+                  className={`fulfillment-card ${fulfillmentType === option.value ? 'active' : ''} ${option.disabled ? 'payment-card-disabled' : ''}`}
+                >
                   <input
                     type="radio"
                     name="fulfillmentType"
                     value={option.value}
                     checked={fulfillmentType === option.value}
+                    disabled={option.disabled}
                     onChange={(e) => {
                       const next = e.target.value;
+                      if (next === 'delivery' && !deliveryEnabled) return;
                       setFulfillmentType(next);
                       if (next !== 'delivery') {
                         setDeliveryInfo(null);

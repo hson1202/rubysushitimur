@@ -150,6 +150,12 @@ const restaurantInfoSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+
+    // When false, customers can only order pickup (no delivery)
+    deliveryEnabled: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

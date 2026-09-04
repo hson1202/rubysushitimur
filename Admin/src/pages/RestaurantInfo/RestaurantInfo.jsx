@@ -61,6 +61,7 @@ const RestaurantInfo = ({ url }) => {
     socialMedia: { facebook: '', twitter: '', linkedin: '', instagram: '' },
     googleMapsUrl: '',
     copyrightText: '',
+    deliveryEnabled: true,
     translations: {
       vi: emptyTranslation(),
       en: emptyTranslation(),
@@ -68,6 +69,7 @@ const RestaurantInfo = ({ url }) => {
     }
   });
   const [newNotificationEmail, setNewNotificationEmail] = useState('');
+  const [isTogglingDelivery, setIsTogglingDelivery] = useState(false);
 
   useEffect(() => {
     fetchRestaurantInfo();
@@ -108,6 +110,7 @@ const RestaurantInfo = ({ url }) => {
           },
           googleMapsUrl: d.googleMapsUrl || '',
           copyrightText: d.copyrightText || '',
+          deliveryEnabled: d.deliveryEnabled !== false,
           translations: {
             vi: {
               restaurantName: d.translations?.vi?.restaurantName || '',
@@ -150,6 +153,34 @@ const RestaurantInfo = ({ url }) => {
       toast.error('Không thể tải thông tin nhà hàng');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleDelivery = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error(t('dz.authDesc'));
+      return;
+    }
+    const nextEnabled = !formData.deliveryEnabled;
+    setIsTogglingDelivery(true);
+    try {
+      const response = await axios.put(
+        `${url}/api/restaurant-info`,
+        { deliveryEnabled: nextEnabled },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        setFormData(prev => ({ ...prev, deliveryEnabled: nextEnabled }));
+        window.dispatchEvent(new CustomEvent('restaurantInfoUpdated', { detail: response.data.data }));
+        toast.success(nextEnabled ? t('dz.deliveryEnabledToast') : t('dz.deliveryDisabledToast'));
+      } else {
+        toast.error(response.data.message || t('dz.deliveryToggleError'));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || t('dz.deliveryToggleError'));
+    } finally {
+      setIsTogglingDelivery(false);
     }
   };
 
@@ -526,6 +557,27 @@ const RestaurantInfo = ({ url }) => {
           <div className="form-section">
             <h2>{t('ri.openingHours')}</h2>
             <p className="hours-help">{t('ri.hoursHelp')}</p>
+            <div className={`delivery-status-card ${formData.deliveryEnabled ? 'is-on' : 'is-off'}`}>
+              <div className="delivery-status-content">
+                <div>
+                  <h3>{t('ri.deliveryTitle')}</h3>
+                  <p className="delivery-status-label">
+                    {formData.deliveryEnabled ? t('ri.deliveryOn') : t('ri.deliveryOff')}
+                  </p>
+                  <p className="delivery-status-help">{t('ri.deliveryHelp')}</p>
+                </div>
+                <label className={`delivery-switch ${isTogglingDelivery ? 'is-busy' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={formData.deliveryEnabled}
+                    disabled={isTogglingDelivery}
+                    onChange={handleToggleDelivery}
+                    aria-label={t('ri.deliveryTitle')}
+                  />
+                  <span className="delivery-switch-slider" />
+                </label>
+              </div>
+            </div>
             <div className="weekly-hours-table">
               <div className="weekly-hours-header">
                 <span>{t('ri.dayColumn')}</span>

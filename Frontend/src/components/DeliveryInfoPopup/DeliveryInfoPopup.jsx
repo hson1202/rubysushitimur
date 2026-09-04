@@ -19,7 +19,7 @@ const pickTranslation = (translations, lang) => {
 
 const DeliveryInfoPopup = ({ setShowDeliveryInfo }) => {
   const { t, i18n } = useTranslation()
-  const { restaurantInfo } = useContext(StoreContext)
+  const { restaurantInfo, deliveryEnabled } = useContext(StoreContext)
   const [page, setPage] = useState(null)
 
   useEffect(() => {
@@ -95,6 +95,11 @@ const DeliveryInfoPopup = ({ setShowDeliveryInfo }) => {
         <div className="delivery-info-popup-scroll">
           <p className="delivery-info-popup-kicker">{restaurantName}</p>
           <h2 id="delivery-info-title">{title}</h2>
+          {!deliveryEnabled && (
+            <p className="delivery-info-popup-unavailable" role="status">
+              {t('deliveryInfo.unavailable')}
+            </p>
+          )}
           {hidden ? (
             <p className="delivery-info-popup-status">{t('deliveryInfo.loadError')}</p>
           ) : (

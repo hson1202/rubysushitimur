@@ -35,6 +35,14 @@ const placeOrder = async (req, res) => {
             })
         }
 
+        if (isDelivery && restaurantInfo.deliveryEnabled === false) {
+            return res.status(403).json({
+                success: false,
+                code: 'DELIVERY_DISABLED',
+                message: 'Tạm thời không giao hàng được'
+            })
+        }
+
         // Validate required fields
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({

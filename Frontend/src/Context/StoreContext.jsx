@@ -206,9 +206,9 @@ const StoreContextProvider =(props)=>{
         await fetchFoodList(foodPagination.page + 1, true);
     }
     
-    const fetchRestaurantInfo = async () => {
+    const fetchRestaurantInfo = async ({ silent = false } = {}) => {
         try {
-            setRestaurantInfoLoading(true);
+            if (!silent) setRestaurantInfoLoading(true);
             const response = await axios.get(url + "/api/restaurant-info");
             if (response.data.success) {
                 setRestaurantInfo(response.data.data);
@@ -217,7 +217,7 @@ const StoreContextProvider =(props)=>{
         } catch (error) {
             console.error('Error fetching restaurant info:', error);
         } finally {
-            setRestaurantInfoLoading(false);
+            if (!silent) setRestaurantInfoLoading(false);
         }
     }
 
@@ -370,6 +370,13 @@ const StoreContextProvider =(props)=>{
     }, [restaurantInfo, updateRestaurantOpenStatus]);
 
     useEffect(() => {
+        const interval = setInterval(() => {
+            fetchRestaurantInfo({ silent: true });
+        }, 60000);
+        return () => clearInterval(interval);
+    }, [url, updateRestaurantOpenStatus]);
+
+    useEffect(() => {
         const handleLanguageChange = () => updateRestaurantOpenStatus(restaurantInfo);
         i18n.on('languageChanged', handleLanguageChange);
         return () => i18n.off('languageChanged', handleLanguageChange);
@@ -399,7 +406,8 @@ const StoreContextProvider =(props)=>{
         restaurantInfo,
         restaurantInfoLoading,
         restaurantOpenStatus,
-        isRestaurantOpenNow: restaurantOpenStatus?.isOpen ?? true
+        isRestaurantOpenNow: restaurantOpenStatus?.isOpen ?? true,
+        deliveryEnabled: restaurantInfo?.deliveryEnabled !== false
     }
 
     return (

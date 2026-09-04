@@ -44,6 +44,7 @@ const resources = {
       'restaurant.closedNow': 'Nhà hàng đóng cửa',
       'restaurant.opensAt': 'Mở cửa lúc {{time}}',
       'restaurant.closedAfterHours': 'Đã hết giờ phục vụ hôm nay',
+      'restaurant.deliveryUnavailable': 'Tạm thời không giao hàng được',
 
       // Header
       'header.title': 'Đặt món ăn yêu thích của bạn tại đây',
@@ -67,6 +68,7 @@ const resources = {
       'nav.deliveryInfo': 'Thông tin giao hàng',
       'deliveryInfo.loading': 'Đang tải thông tin giao hàng...',
       'deliveryInfo.loadError': 'Không thể tải thông tin giao hàng. Vui lòng thử lại sau.',
+      'deliveryInfo.unavailable': 'Tạm thời không giao hàng được. Hiện chỉ nhận lấy tại quán.',
       'common.close': 'Đóng',
 
       // Menu
@@ -501,6 +503,8 @@ const resources = {
       'placeOrder.fulfillment.dineInDesc': 'Ăn tại chỗ',
       'placeOrder.fulfillment.deliveryTitle': 'Giao hàng tận nơi',
       'placeOrder.fulfillment.deliveryDesc': 'Giao tới địa chỉ của bạn',
+      'placeOrder.fulfillment.deliveryUnavailable': 'Tạm thời không giao hàng được',
+      'placeOrder.fulfillment.deliveryDisabledNotice': 'Hôm nay chỉ nhận lấy tại quán. Tạm thời không giao hàng được.',
       'placeOrder.payment.title': 'Phương thức thanh toán',
       'placeOrder.payment.cash': 'Tiền mặt',
       'placeOrder.payment.cashDesc': 'Thanh toán khi nhận hàng',
@@ -563,6 +567,7 @@ const resources = {
       'placeOrder.errors.missingAddressFields': '⚠️ Vui lòng điền đầy đủ và chính xác: Tên đường, Số nhà, Thành phố và Mã bưu điện (4 chữ số) để chúng tôi giao hàng chính xác!',
       'placeOrder.errors.minOrderNotMet': 'Đơn tối thiểu cho khu vực giao hàng này là {{minOrder}}. Đơn hàng hiện tại của bạn là {{subtotal}}. Vui lòng thêm {{needed}} để tiếp tục.',
       'placeOrder.errors.deliveryZoneNotAvailable': '⚠️ Địa chỉ này nằm ngoài khu vực giao hàng của chúng tôi. Vui lòng chọn địa chỉ khác hoặc liên hệ nhà hàng để biết thêm chi tiết.',
+      'placeOrder.errors.deliveryDisabled': 'Tạm thời không giao hàng được. Vui lòng chọn lấy tại quán.',
       'placeOrder.errors.emptyCart': 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước.',
       'placeOrder.errors.networkError': 'Lỗi mạng: Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet của bạn.',
       'placeOrder.errors.serverError': 'Lỗi máy chủ: {{status}}',
@@ -723,6 +728,7 @@ const resources = {
       'restaurant.closedNow': 'Restaurant is closed',
       'restaurant.opensAt': 'Opens at {{time}}',
       'restaurant.closedAfterHours': 'We are closed for today',
+      'restaurant.deliveryUnavailable': 'Delivery is temporarily unavailable',
 
       // Header
       'header.title': 'Order your favourite food here',
@@ -746,6 +752,7 @@ const resources = {
       'nav.deliveryInfo': 'Delivery Information',
       'deliveryInfo.loading': 'Loading delivery information...',
       'deliveryInfo.loadError': 'Could not load delivery information. Please try again later.',
+      'deliveryInfo.unavailable': 'Delivery is temporarily unavailable. Only pickup is available.',
       'common.close': 'Close',
 
       // Menu
@@ -1182,6 +1189,8 @@ const resources = {
       'placeOrder.fulfillment.dineInDesc': 'Eat at the restaurant',
       'placeOrder.fulfillment.deliveryTitle': 'Delivery',
       'placeOrder.fulfillment.deliveryDesc': 'Deliver to your address',
+      'placeOrder.fulfillment.deliveryUnavailable': 'Delivery is temporarily unavailable',
+      'placeOrder.fulfillment.deliveryDisabledNotice': 'Only pickup is available today. Delivery is temporarily unavailable.',
       'placeOrder.payment.title': 'Payment method',
       'placeOrder.payment.cash': 'Cash',
       'placeOrder.payment.cashDesc': 'Pay when you receive your order',
@@ -1244,6 +1253,7 @@ const resources = {
       'placeOrder.errors.missingAddressFields': '⚠️ Please fill in Street, House number, City and a valid 4-digit Postal code so we can deliver accurately!',
       'placeOrder.errors.minOrderNotMet': '❌ Minimum order for this delivery zone is {{minOrder}}. Your current order is {{subtotal}}. Please add {{needed}} more to proceed.',
       'placeOrder.errors.deliveryZoneNotAvailable': '⚠️ This address is outside our delivery area. Please choose a different address or contact the restaurant for more details.',
+      'placeOrder.errors.deliveryDisabled': 'Delivery is temporarily unavailable. Please choose pickup.',
       'placeOrder.errors.emptyCart': 'Your cart is empty. Please add some items first.',
       'placeOrder.errors.networkError': 'Network error: Unable to connect to server. Please check your internet connection.',
       'placeOrder.errors.serverError': 'Server error: {{status}}',
@@ -1404,6 +1414,7 @@ const resources = {
       'restaurant.closedNow': 'Az étterem zárva',
       'restaurant.opensAt': 'Nyitás: {{time}}',
       'restaurant.closedAfterHours': 'Ma már nem fogadunk rendelést',
+      'restaurant.deliveryUnavailable': 'Átmenetileg nem tudunk házhoz szállítani',
 
       // Header
       'header.title': 'Rendelje meg kedvenc ételét itt',
@@ -1427,6 +1438,7 @@ const resources = {
       'nav.deliveryInfo': 'HÁZHOZ SZÁLLÍTÁSI INFORMÁCIÓK',
       'deliveryInfo.loading': 'Szállítási információk betöltése...',
       'deliveryInfo.loadError': 'A szállítási információk betöltése sikertelen. Kérjük, próbálja újra később.',
+      'deliveryInfo.unavailable': 'Átmenetileg nem tudunk házhoz szállítani. Jelenleg csak személyes átvétel érhető el.',
       'common.close': 'Bezárás',
 
       // Menu
@@ -1863,6 +1875,8 @@ const resources = {
       'placeOrder.fulfillment.dineInDesc': 'Fogyasztás az étteremben',
       'placeOrder.fulfillment.deliveryTitle': 'Házhozszállítás',
       'placeOrder.fulfillment.deliveryDesc': 'Kiszállítás a megadott címre',
+      'placeOrder.fulfillment.deliveryUnavailable': 'Átmenetileg nem tudunk házhoz szállítani',
+      'placeOrder.fulfillment.deliveryDisabledNotice': 'Ma csak személyes átvétel érhető el. Átmenetileg nem tudunk házhoz szállítani.',
       'placeOrder.payment.title': 'Fizetési mód',
       'placeOrder.payment.cash': 'Készpénz',
       'placeOrder.payment.cashDesc': 'Fizetés átvételkor',
@@ -1925,6 +1939,7 @@ const resources = {
       'placeOrder.errors.missingAddressFields': '⚠️ Kérjük, add meg pontosan: utca neve, házszám, város és érvényes (4 számjegyű) irányítószám a pontos szállításhoz!',
       'placeOrder.errors.minOrderNotMet': '❌ A minimum rendelés ebben a szállítási zónában {{minOrder}}. A jelenlegi rendelésed {{subtotal}}. Adj még hozzá {{needed}} értékben a folytatáshoz.',
       'placeOrder.errors.deliveryZoneNotAvailable': '⚠️ Ez a cím kívül esik a szállítási területünkön. Kérjük, válassz másik címet, vagy vedd fel a kapcsolatot az étteremmel.',
+      'placeOrder.errors.deliveryDisabled': 'Átmenetileg nem tudunk házhoz szállítani. Kérjük, válaszd a személyes átvételt.',
       'placeOrder.errors.emptyCart': 'A kosarad üres. Kérjük, előbb adj hozzá termékeket.',
       'placeOrder.errors.networkError': 'Hálózati hiba: Nem sikerült csatlakozni a szerverhez. Ellenőrizd az internetkapcsolatot.',
       'placeOrder.errors.serverError': 'Szerverhiba: {{status}}',

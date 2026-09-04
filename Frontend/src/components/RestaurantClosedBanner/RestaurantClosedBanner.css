@@ -19,3 +19,9 @@
 .restaurant-closed-text {
   line-height: 1.4;
 }
+
+.delivery-unavailable-banner {
+  background: #fff7ed;
+  color: #9a3412;
+  border-bottom-color: #fdba74;
+}

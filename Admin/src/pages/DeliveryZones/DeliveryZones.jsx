@@ -13,6 +13,8 @@ const DeliveryZones = ({ url }) => {
   const [showLocationForm, setShowLocationForm] = useState(false);
   const [editingZone, setEditingZone] = useState(null);
   const [tokenDebug, setTokenDebug] = useState(null);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(true);
+  const [isTogglingDelivery, setIsTogglingDelivery] = useState(false);
 
   // Zone form state
   const [zoneForm, setZoneForm] = useState({
@@ -50,7 +52,7 @@ const DeliveryZones = ({ url }) => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      await Promise.all([fetchZones(), fetchRestaurantLocation()]);
+      await Promise.all([fetchZones(), fetchRestaurantLocation(), fetchDeliveryEnabled()]);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -88,6 +90,48 @@ const DeliveryZones = ({ url }) => {
       }
     } catch (error) {
       console.error('Error fetching restaurant location:', error);
+    }
+  };
+
+  const fetchDeliveryEnabled = async () => {
+    try {
+      const response = await axios.get(`${url}/api/restaurant-info`, {
+        headers: { token: localStorage.getItem('adminToken') || '' }
+      });
+      if (response.data.success) {
+        setDeliveryEnabled(response.data.data?.deliveryEnabled !== false);
+      }
+    } catch (error) {
+      console.error('Error fetching delivery status:', error);
+    }
+  };
+
+  const handleToggleDelivery = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error(t('dz.authDesc'));
+      return;
+    }
+
+    const nextEnabled = !deliveryEnabled;
+    setIsTogglingDelivery(true);
+    try {
+      const response = await axios.put(
+        `${url}/api/restaurant-info`,
+        { deliveryEnabled: nextEnabled },
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        setDeliveryEnabled(nextEnabled);
+        window.dispatchEvent(new CustomEvent('restaurantInfoUpdated', { detail: response.data.data }));
+        toast.success(nextEnabled ? t('dz.deliveryEnabledToast') : t('dz.deliveryDisabledToast'));
+      } else {
+        toast.error(response.data.message || t('dz.deliveryToggleError'));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || t('dz.deliveryToggleError'));
+    } finally {
+      setIsTogglingDelivery(false);
     }
   };
 
@@ -392,6 +436,28 @@ const DeliveryZones = ({ url }) => {
           </div>
         </div>
       )}
+
+      <div className={`section-card delivery-status-card ${deliveryEnabled ? 'is-on' : 'is-off'}`}>
+        <div className="delivery-status-content">
+          <div>
+            <h2>{t('dz.deliveryToggleTitle')}</h2>
+            <p className="delivery-status-label">
+              {deliveryEnabled ? t('dz.deliveryEnabledLabel') : t('dz.deliveryDisabledLabel')}
+            </p>
+            <p className="delivery-status-help">{t('dz.deliveryToggleHelp')}</p>
+          </div>
+          <label className={`delivery-switch ${isTogglingDelivery ? 'is-busy' : ''}`}>
+            <input
+              type="checkbox"
+              checked={deliveryEnabled}
+              disabled={isTogglingDelivery}
+              onChange={handleToggleDelivery}
+              aria-label={t('dz.deliveryToggleTitle')}
+            />
+            <span className="delivery-switch-slider" />
+          </label>
+        </div>
+      </div>
 
       {/* Restaurant Location Section */}
       <div className="section-card location-section">
