@@ -3,9 +3,7 @@ import './Blog.css'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { Editor } from '@tinymce/tinymce-react'
-import 'tinymce/skins/ui/oxide/skin.min.css'
-import 'tinymce/skins/ui/oxide/content.min.css'
+import RichTextEditor from '../../components/RichTextEditor/RichTextEditor'
 import config from '../../config/config'
 
 const Blog = ({ url }) => {
@@ -37,43 +35,28 @@ const Blog = ({ url }) => {
   })
 
 
-  // TinyMCE editor configuration - giống Microsoft Word (Premium Edition)
   const tinymceConfig = {
     height: 500,
     menubar: true,
     plugins: [
       'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
       'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-      'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-      'emoticons', 'template', 'paste', 'textpattern', 'imagetools',
-      'codesample', 'hr', 'pagebreak', 'nonbreaking', 'toc', 'imagetools',
-      'textcolor', 'colorpicker', 'background', 'fontfamily', 'fontsize',
-      'spellchecker', 'contextmenu', 'paste', 'textpattern', 'imagetools'
+      'insertdatetime', 'media', 'table', 'help', 'wordcount',
+      'emoticons', 'codesample', 'pagebreak', 'nonbreaking', 'directionality'
     ],
     toolbar: [
-      'undo redo | formatselect | bold italic underline strikethrough | fontfamily fontsize | forecolor backcolor',
+      'undo redo | blocks | bold italic underline strikethrough | fontfamily fontsize | forecolor backcolor',
       'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-      'table image media link codesample | subscript superscript | pagebreak nonbreaking | toc',
-      'searchreplace visualblocks code fullscreen | preview print | ltr rtl | emoticons template',
-      'spellchecker | contextmenu | paste | textpattern | imagetools'
+      'table image media link codesample | subscript superscript | pagebreak nonbreaking',
+      'searchreplace visualblocks code fullscreen | preview | ltr rtl | emoticons'
     ],
-    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
-    branding: false,
-    promotion: false,
-    language: 'en',
-    skin: 'oxide',
-    content_css: 'default',
-    // Premium features với API key
-    spellchecker: true,
-    contextmenu: true,
     paste_data_images: true,
     automatic_uploads: true,
     file_picker_types: 'image',
     images_upload_url: `${config.BACKEND_URL}/api/upload-image`,
-    images_upload_handler: function (blobInfo, success, failure) {
-      // Handle image upload here
-      success('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
-    }
+    images_upload_handler: (blobInfo) => Promise.resolve(
+      `data:${blobInfo.blob().type};base64,${blobInfo.base64()}`
+    )
   }
 
   useEffect(() => {
@@ -444,9 +427,7 @@ const Blog = ({ url }) => {
             <div className="form-group">
               <label htmlFor="content">{t('blog.content')}</label>
               
-              {/* WYSIWYG Editor - TinyMCE giống Word */}
-              <Editor
-                apiKey="y36hnvlsoxs1oqqcctxdxjq5eyzpvsaiku7b09nh8dmr4mno"
+              <RichTextEditor
                 value={newBlog.content}
                 onEditorChange={(content) => setNewBlog({ ...newBlog, content })}
                 init={tinymceConfig}
@@ -777,9 +758,7 @@ const Blog = ({ url }) => {
               <div className="form-group">
                 <label htmlFor="edit-content">{t('blog.content')}</label>
                 
-                {/* WYSIWYG Editor for Edit - TinyMCE giống Word */}
-                <Editor
-                  apiKey="y36hnvlsoxs1oqqcctxdxjq5eyzpvsaiku7b09nh8dmr4mno"
+                <RichTextEditor
                   value={editingBlog.content}
                   onEditorChange={(content) => setEditingBlog({ ...editingBlog, content })}
                   init={tinymceConfig}

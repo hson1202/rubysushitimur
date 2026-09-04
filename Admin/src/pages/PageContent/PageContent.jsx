@@ -3,7 +3,7 @@ import './PageContent.css'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { Editor } from '@tinymce/tinymce-react'
+import RichTextEditor from '../../components/RichTextEditor/RichTextEditor'
 
 const emptyTranslation = () => ({ title: '', content: '' })
 
@@ -20,16 +20,6 @@ const PageContent = ({ url }) => {
       en: emptyTranslation()
     }
   })
-
-  const tinymceConfig = {
-    height: 420,
-    menubar: false,
-    plugins: 'lists link table preview code fullscreen wordcount',
-    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | table | link | preview code',
-    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
-    branding: false,
-    promotion: false
-  }
 
   const fetchPage = async () => {
     try {
@@ -202,11 +192,9 @@ const PageContent = ({ url }) => {
             </div>
             <div className="form-group">
               <label>{t('pageContent.body')}</label>
-              <Editor
-                apiKey="y36hnvlsoxs1oqqcctxdxjq5eyzpvsaiku7b09nh8dmr4mno"
+              <RichTextEditor
                 value={formData.translations[lang.code].content}
                 onEditorChange={(content) => handleContentChange(lang.code, content)}
-                init={tinymceConfig}
               />
             </div>
           </div>
