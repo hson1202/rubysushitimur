@@ -6,7 +6,25 @@ import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
 import EditProductPopup from '../../components/EditProductPopup/EditProductPopup'
 import config from '../../config/config'
-import { ALLERGEN_OPTIONS } from '../../utils/allergens'
+import { ALLERGEN_OPTIONS, LETTER_TO_CODE } from '../../utils/allergens'
+
+const csvCell = (value) => `"${String(value ?? '').replace(/"/g, '""').trim()}"`
+
+const CODE_TO_LETTER = Object.fromEntries(
+  Object.entries(LETTER_TO_CODE).map(([letter, code]) => [code, letter])
+)
+
+const formatAllergensForExport = (codes) => {
+  if (!Array.isArray(codes) || codes.length === 0) return ''
+  return codes
+    .map((code) => {
+      const opt = ALLERGEN_OPTIONS.find((item) => item.code === code)
+      const letter = CODE_TO_LETTER[code]
+      if (letter && opt) return `${letter} (${opt.label})`
+      return opt?.label || code
+    })
+    .join(', ')
+}
 
 const createInitialEditForm = () => ({
   sku: '',
@@ -1096,6 +1114,72 @@ const handleQuickEditCancel = () => {
     return category ? category.name : categoryId
   }
 
+  const handleExportCSV = async () => {
+    try {
+      toast.info(t('products.exporting', { defaultValue: 'Đang xuất sản phẩm...' }))
+
+      const params = new URLSearchParams()
+      params.append('noPagination', 'true')
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      if (filterCategory !== 'all') params.append('category', filterCategory)
+      if (searchTerm.trim()) params.append('search', searchTerm.trim())
+
+      const { data } = await axios.get(`${config.BACKEND_URL}/api/food/list?${params}`)
+      let list = Array.isArray(data?.data) ? data.data : []
+
+      if (scheduleFilter === 'weekly') {
+        list = list.filter((p) => p.weeklySchedule?.enabled === true)
+        if (selectedWeekDay !== null) {
+          list = list.filter(
+            (p) => Array.isArray(p.weeklySchedule?.days) && p.weeklySchedule.days.includes(selectedWeekDay)
+          )
+        }
+      } else if (scheduleFilter === 'daily') {
+        list = list.filter((p) => p.dailyAvailability?.enabled === true)
+      }
+
+      if (list.length === 0) {
+        toast.warning(t('products.exportEmpty', { defaultValue: 'Không có sản phẩm để xuất' }))
+        return
+      }
+
+      const header = [
+        t('products.category', { defaultValue: 'Danh mục' }),
+        t('products.name', { defaultValue: 'Tên sản phẩm' }),
+        t('products.sku', { defaultValue: 'Mã sản phẩm' }),
+        t('products.price', { defaultValue: 'Giá' }),
+        t('products.allergens', { defaultValue: 'Dị ứng' }),
+      ]
+
+      const rows = list.map((product) => [
+        getCategoryName(product.category) || '',
+        product.name || product.nameHU || product.nameEN || product.nameVI || '',
+        product.sku || '',
+        product.price ?? '',
+        formatAllergensForExport(product.allergens),
+      ])
+
+      const csvBody = [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\n')
+      const csv = `\uFEFF${csvBody}`
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', 'products.csv')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(downloadUrl)
+      toast.success(
+        t('products.exportSuccess', { defaultValue: 'Đã xuất {{count}} sản phẩm', count: list.length })
+      )
+    } catch (e) {
+      toast.error(
+        t('products.exportError', { defaultValue: 'Xuất file thất bại' }) + ': ' + getErrMsg(e, e.message)
+      )
+    }
+  }
+
   // Backend now handles filtering and pagination, so just use the foodList directly
   // Sorting by quantity for visual priority (optional - can be removed if backend handles it)
   const filteredProducts = useMemo(() => {
@@ -1179,6 +1263,9 @@ const handleQuickEditCancel = () => {
         <div className="header-actions">
           <button className="refresh-btn" onClick={() => fetchFoodList(true)}>
             <span>🔄</span> {t('common.refresh', { defaultValue: 'Refresh' })}
+          </button>
+          <button className="export-btn" onClick={handleExportCSV}>
+            {t('products.exportCsv', { defaultValue: 'Xuất CSV' })}
           </button>
           <button 
             onClick={() => setShowAddForm(!showAddForm)} 
