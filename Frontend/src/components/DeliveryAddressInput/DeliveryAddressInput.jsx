@@ -76,6 +76,7 @@ const DeliveryAddressInput = ({
   const calcAbortRef = useRef(null);
   const selectingSuggestionRef = useRef(false);
   const lastFreeTextQueryRef = useRef('');
+  const suggestRequestIdRef = useRef(0);
   // OpenStreetMap/Nominatim không cần API key, luôn available
   const manualPinAvailable = true;
 
@@ -136,6 +137,7 @@ const DeliveryAddressInput = ({
       return;
     }
 
+    const requestId = ++suggestRequestIdRef.current;
     setIsLoading(true);
     setError('');
 
@@ -150,15 +152,18 @@ const DeliveryAddressInput = ({
         `${url}/api/delivery/autocomplete?query=${encodeURIComponent(searchQuery)}${proximityParam}`
       );
 
+      if (requestId !== suggestRequestIdRef.current) return;
       if (response.data.success) {
         setSuggestions(response.data.data);
         setShowSuggestions(true);
       }
     } catch (err) {
+      // Lỗi gợi ý không chặn khách: vẫn tính phí được khi gõ xong / bấm Enter
       console.error('Error fetching suggestions:', err);
-      setError(t('placeOrder.form.addressError'));
     } finally {
-      setIsLoading(false);
+      if (requestId === suggestRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [url, restaurantLocation]);
 

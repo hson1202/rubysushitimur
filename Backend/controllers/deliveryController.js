@@ -90,7 +90,7 @@ const autocompleteAddress = async (req, res) => {
       }
     }
 
-    const data = await fetchNominatim('search', params);
+    const data = await fetchNominatim('search', params, { priority: 'low' });
 
     let suggestions = [];
 

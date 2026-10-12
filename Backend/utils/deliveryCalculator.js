@@ -37,29 +37,51 @@ export function geocodeErrorResult(error) {
 }
 
 const cache = new Map();
-let pendingCount = 0;
 let lastRequestAt = 0;
-let queue = Promise.resolve();
+let pumping = false;
+// Tính phí (high) luôn được đi trước gợi ý autocomplete (low). Gợi ý chỉ giữ 1 request
+// chờ: request mới hơn thay request cũ, để khách gõ nhanh không làm nghẽn việc tính phí
+const waiting = { high: [], low: [] };
+const MAX_WAITING = { high: NOMINATIM_MAX_PENDING, low: 1 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function waitForSlot() {
-  const slot = queue.then(async () => {
-    const wait = lastRequestAt + NOMINATIM_MIN_INTERVAL_MS - Date.now();
-    if (wait > 0) await sleep(wait);
-    lastRequestAt = Date.now();
-  });
-  queue = slot.catch(() => {});
-  return slot;
+async function pumpQueue() {
+  if (pumping) return;
+  pumping = true;
+  try {
+    while (waiting.high.length || waiting.low.length) {
+      const wait = lastRequestAt + NOMINATIM_MIN_INTERVAL_MS - Date.now();
+      if (wait > 0) await sleep(wait);
+      const next = waiting.high.shift() || waiting.low.shift();
+      if (!next) break;
+      lastRequestAt = Date.now();
+      next.resolve();
+    }
+  } finally {
+    pumping = false;
+  }
 }
 
-async function fetchNominatimUncached(url) {
-  if (pendingCount >= NOMINATIM_MAX_PENDING) {
-    throw new GeocodeError('GEOCODE_UNAVAILABLE', 'Too many pending Nominatim requests');
-  }
-  pendingCount += 1;
+function waitForSlot(priority) {
+  return new Promise((resolve, reject) => {
+    const queue = waiting[priority];
+    if (queue.length >= MAX_WAITING[priority]) {
+      if (priority === 'low') {
+        queue.shift().reject(new GeocodeError('GEOCODE_UNAVAILABLE', 'Superseded by a newer autocomplete request'));
+      } else {
+        reject(new GeocodeError('GEOCODE_UNAVAILABLE', 'Too many pending Nominatim requests'));
+        return;
+      }
+    }
+    queue.push({ resolve, reject });
+    pumpQueue();
+  });
+}
+
+async function fetchNominatimUncached(url, priority) {
   try {
-    await waitForSlot();
+    await waitForSlot(priority);
     const response = await fetch(url, {
       headers: { 'User-Agent': NOMINATIM_USER_AGENT },
       signal: AbortSignal.timeout(NOMINATIM_TIMEOUT_MS)
@@ -71,16 +93,15 @@ async function fetchNominatimUncached(url) {
   } catch (error) {
     if (error instanceof GeocodeError) throw error;
     throw new GeocodeError('GEOCODE_UNAVAILABLE', `Nominatim request failed: ${error.message}`);
-  } finally {
-    pendingCount -= 1;
   }
 }
 
 /**
  * Gọi Nominatim với timeout, giới hạn 1 request/giây và cache (dùng chung promise
  * cho các request trùng nhau đang chạy).
+ * @param {'high'|'low'} [priority='high'] - 'low' cho autocomplete
  */
-export function fetchNominatim(path, params) {
+export function fetchNominatim(path, params, { priority = 'high' } = {}) {
   const search = new URLSearchParams({ format: 'json', addressdetails: '1', 'accept-language': 'en', ...params });
   const url = `${NOMINATIM_BASE_URL}/${path}?${search.toString()}`;
 
@@ -89,7 +110,7 @@ export function fetchNominatim(path, params) {
     return cached.promise;
   }
 
-  const promise = fetchNominatimUncached(url);
+  const promise = fetchNominatimUncached(url, priority);
   cache.set(url, { promise, expiresAt: Date.now() + CACHE_TTL_MS });
   promise.catch(() => cache.delete(url));
 
