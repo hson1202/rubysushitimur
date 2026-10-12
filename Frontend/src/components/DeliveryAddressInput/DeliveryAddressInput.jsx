@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import ManualLocationPicker from '../ManualLocationPicker/ManualLocationPicker';
+import { parseTypedAddress } from '../../utils/addressParser';
 
 const DEFAULT_COORDS = { latitude: 47.4979, longitude: 19.0402 }; // Budapest (fallback)
 
@@ -19,7 +20,7 @@ const buildAddressPayload = ({ address = '', components = {}, latitude, longitud
 
   return {
     address,
-    street: components.streetLine || components.street || address,
+    street: components.street || components.streetLine || '',
     houseNumber: components.houseNumber || '',
     city: components.city || '',
     state: components.state || '',
@@ -30,6 +31,15 @@ const buildAddressPayload = ({ address = '', components = {}, latitude, longitud
     longitude: coords?.longitude
   };
 };
+
+// Kết quả bản đồ hay thiếu số nhà / mã bưu điện: lấy phần khách đã gõ để bù vào
+const mergeWithTyped = (components = {}, typed = {}) => ({
+  ...components,
+  street: components.street || typed.street || '',
+  houseNumber: components.houseNumber || typed.houseNumber || '',
+  city: components.city || typed.city || '',
+  zipcode: components.zipcode || typed.zipcode || ''
+});
 
 const DeliveryAddressInput = ({
   value,
@@ -225,7 +235,10 @@ const DeliveryAddressInput = ({
           onDeliveryCalculated(deliveryData);
         }
 
-        const mergedComponents = components || deliveryData.addressComponents || {};
+        const mergedComponents = mergeWithTyped(
+          components || deliveryData.addressComponents || {},
+          parseTypedAddress(address || '')
+        );
         const normalized = buildAddressPayload({
           address: deliveryData.address || address || '',
           components: mergedComponents,
@@ -301,12 +314,16 @@ const DeliveryAddressInput = ({
           if (onChange) {
             const normalizedFallback = buildAddressPayload({
               address: deliveryData.address,
+              components: mergeWithTyped(parseTypedAddress(deliveryData.address), parseTypedAddress(address || '')),
               latitude: currentCoords.latitude,
               longitude: currentCoords.longitude
             });
             onChange(normalizedFallback);
             applyAutofillFields(normalizedFallback);
           }
+        } else if (!preserveManualFields && address) {
+          // Không tìm được địa chỉ: vẫn tách sẵn chữ khách gõ vào 4 ô để khách sửa lại
+          applyAutofillFields(parseTypedAddress(address));
         }
 
         setError(errorMessage);
@@ -317,6 +334,9 @@ const DeliveryAddressInput = ({
       setError(err.code === 'ECONNABORTED'
         ? t('placeOrder.form.geocodeUnavailable')
         : t('placeOrder.form.deliveryCalculationError'));
+      if (address && !preserveManualFields) {
+        applyAutofillFields(parseTypedAddress(address));
+      }
       if (!address && !suppressQueryUpdate && typeof latitude === 'number' && typeof longitude === 'number') {
         setQuery(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
       }
@@ -396,11 +416,18 @@ const DeliveryAddressInput = ({
     setShowSuggestions(false);
     setSuggestions([]);
 
+    // Gợi ý OSM hay thiếu số nhà: giữ số nhà khách đã gõ
+    const typed = parseTypedAddress(query);
+    const components = {
+      ...(suggestion.components || {}),
+      houseNumber: suggestion.components?.houseNumber || typed.houseNumber || ''
+    };
+
     // Update parent component
     if (onChange) {
       const normalized = buildAddressPayload({
         address: suggestion.address,
-        components: suggestion.components || {},
+        components,
         latitude: suggestion.latitude,
         longitude: suggestion.longitude
       });
@@ -413,7 +440,7 @@ const DeliveryAddressInput = ({
       address: suggestion.address,
       latitude: suggestion.latitude,
       longitude: suggestion.longitude,
-      components: suggestion.components
+      components
     });
   };
 
@@ -436,7 +463,7 @@ const DeliveryAddressInput = ({
     }
 
     if (onChange) {
-      onChange(buildAddressPayload({ address: newValue }));
+      onChange(buildAddressPayload({ address: newValue, components: parseTypedAddress(newValue) }));
     }
   };
 
@@ -665,6 +692,12 @@ const DeliveryAddressInput = ({
               <span className="info-value">{deliveryInfo.zone.estimatedTime} min</span>
             </div>
           </div>
+          {deliveryInfo.approximate && (
+            <div className="delivery-approximate-warning">
+              <span aria-hidden="true">⚠️</span>
+              <span>{t('placeOrder.form.approximateLocation')}</span>
+            </div>
+          )}
         </div>
       )}
 

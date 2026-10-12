@@ -294,6 +294,20 @@
   color: #ffd700;
 }
 
+.delivery-approximate-warning {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fff8e1;
+  border: 1px solid #ffb300;
+  border-radius: 8px;
+  color: #7a4f00;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* Error message - Improved visibility */
 .delivery-error {
   margin-top: 15px;

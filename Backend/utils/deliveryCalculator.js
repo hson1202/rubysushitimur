@@ -1,6 +1,12 @@
 import deliveryZoneModel from "../models/deliveryZoneModel.js";
 import restaurantLocationModel from "../models/restaurantLocationModel.js";
-import { extractAddressComponents, formatShortAddress, cleanDisplayName } from "./addressFormat.js";
+import {
+  extractAddressComponents,
+  formatShortAddress,
+  cleanDisplayName,
+  expandHungarianAbbreviations,
+  parseHungarianAddress
+} from "./addressFormat.js";
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
 const NOMINATIM_USER_AGENT = process.env.NOMINATIM_USER_AGENT || 'FoodDeliveryApp/1.0';
@@ -207,7 +213,7 @@ function pickBestResult(results, expected) {
 // Địa chỉ đã lưu hay để cả chuỗi đầy đủ trong `street` ("Kossuth utca 5, 1051 Budapest"),
 // nên chỉ lấy phần trước dấu phẩy và không lặp lại số nhà nếu đã có
 function structuredStreetLine({ street = '', houseNumber = '' } = {}) {
-  const streetPart = (street || '').toString().split(',')[0].trim();
+  const streetPart = expandHungarianAbbreviations((street || '').toString().split(',')[0]);
   const house = (houseNumber || '').toString().trim();
   if (!house || streetPart.toLowerCase().split(/\s+/).includes(house.toLowerCase())) {
     return streetPart;
@@ -219,50 +225,116 @@ const hasStructuredFields = (fields) => Boolean(
   fields && (fields.street || '').trim() && ((fields.city || '').trim() || (fields.zipcode || '').toString().trim())
 );
 
-/**
- * Geocode địa chỉ. Nếu có `structured` (street/houseNumber/city/zipcode) thì dùng
- * tìm kiếm có cấu trúc và chỉ chấp nhận kết quả cùng mã bưu điện/thành phố.
- */
-export async function geocodeAddress(address, structured = null) {
-  if (hasStructuredFields(structured)) {
-    const city = (structured.city || '').trim();
-    const zipcode = (structured.zipcode || '').toString().trim();
-    const baseParams = { street: structuredStreetLine(structured), countrycodes: 'hu', limit: '5' };
-    const attempts = [];
-    if (city || zipcode) {
-      attempts.push({ ...baseParams, ...(city && { city }), ...(zipcode && { postalcode: zipcode }) });
-    }
-    // Mã bưu điện khách nhập có thể khác mã trên OSM → thử lại chỉ với thành phố
-    if (city && zipcode) {
-      attempts.push({ ...baseParams, city });
-    }
+const trimFields = (fields = {}) => ({
+  street: (fields.street || '').toString().split(',')[0].trim(),
+  houseNumber: (fields.houseNumber || '').toString().trim(),
+  city: (fields.city || '').toString().trim(),
+  zipcode: (fields.zipcode || '').toString().trim()
+});
 
-    for (const params of attempts) {
-      const data = await fetchNominatim('search', params);
-      const best = Array.isArray(data) ? pickBestResult(data, structured) : null;
-      if (best) return best;
-    }
+// Thứ tự thử: địa chỉ đầy đủ → bỏ số nhà (OSM ở Hungary hay thiếu số nhà) → tâm thị trấn /
+// mã bưu điện (vị trí gần đúng). Các bước có cấu trúc đều bắt buộc cùng khu vực khách nhập.
+function buildGeocodeAttempts(typedQuery, fields, trusted) {
+  const { city, zipcode } = fields;
+  const expected = city || zipcode ? fields : null;
+  const attempts = [];
+  const seen = new Set();
+  const add = (params, { approximate = false, matchLocality = true, expectedOverride } = {}) => {
+    const fullParams = { countrycodes: 'hu', limit: '5', ...params };
+    const key = JSON.stringify(fullParams);
+    if (seen.has(key)) return;
+    seen.add(key);
+    attempts.push({
+      params: fullParams,
+      expected: expectedOverride || (matchLocality ? expected : null),
+      approximate
+    });
+  };
 
-    // OSM hay thiếu số nhà: thử lại theo chuỗi đầy đủ nhưng vẫn bắt buộc cùng khu vực
-    const fallbackQuery = buildStructuredAddressQuery(structured);
-    const fallback = await fetchNominatim('search', { q: fallbackQuery, countrycodes: 'hu', limit: '10' });
-    const fallbackBest = Array.isArray(fallback) ? pickBestResult(fallback, structured) : null;
-    if (fallbackBest) return fallbackBest;
-
-    throw new GeocodeError('ADDRESS_NOT_FOUND', `Address not found: ${fallbackQuery}`);
+  // Chuỗi gõ tự do: tìm nguyên văn trước như cũ, không lọc khu vực vì phần tách tự động có thể sai
+  if (!trusted && typedQuery) {
+    add({ q: typedQuery }, { matchLocality: false });
+    add({ q: expandHungarianAbbreviations(typedQuery) }, { matchLocality: false });
   }
 
-  const query = (address || '').trim();
-  if (!query) {
+  if (fields.street && (city || zipcode)) {
+    const locality = { ...(city && { city }), ...(zipcode && { postalcode: zipcode }) };
+    const streetLines = [structuredStreetLine(fields)];
+    if (fields.houseNumber) streetLines.push(structuredStreetLine({ street: fields.street }));
+    for (const street of streetLines) {
+      add({ street, ...locality });
+      // Mã bưu điện khách nhập có thể khác mã trên OSM → thử lại chỉ với thành phố
+      if (city && zipcode) add({ street, city });
+    }
+    if (trusted) {
+      add({ q: buildStructuredAddressQuery(fields), limit: '10' });
+    }
+  }
+
+  // Nominatim bỏ qua mã bưu điện nếu có kèm city (trả về trung tâm Budapest), nên tìm theo
+  // mã bưu điện riêng; khi khách có nhập thành phố thì kết quả phải đúng thành phố đó
+  if (zipcode) {
+    add({ postalcode: zipcode }, { approximate: true, expectedOverride: city ? { city } : { zipcode } });
+  }
+  if (city) add({ city }, { approximate: true });
+
+  return attempts;
+}
+
+// OSM hay thiếu số nhà / mã bưu điện: giữ lại phần khách đã nhập thay vì để trống
+function mergeTypedFields(best, fields, approximate) {
+  const components = { ...best.components };
+  const typedStreet = expandHungarianAbbreviations(fields.street);
+  // Kết quả cấp thị trấn/mã bưu điện không có đường; street/số nhà lúc này chỉ là
+  // phần đoán từ display_name nên bỏ đi
+  if (approximate) {
+    components.street = '';
+    components.houseNumber = '';
+  }
+  if (!components.street && typedStreet) components.street = typedStreet;
+  if (!components.houseNumber && fields.houseNumber) components.houseNumber = fields.houseNumber;
+  if (!components.zipcode && fields.zipcode) components.zipcode = fields.zipcode;
+  if (!components.city && fields.city) {
+    components.city = fields.city;
+    if (!components.town && !components.village) components.town = fields.city;
+  }
+  components.streetLine = [components.houseNumber, components.street].filter(Boolean).join(' ').trim();
+
+  return {
+    ...best,
+    components,
+    formattedAddress: formatShortAddress(components) || best.formattedAddress,
+    approximate: approximate || !best.components.street
+  };
+}
+
+/**
+ * Geocode địa chỉ. `structured` (street/houseNumber/city/zipcode) là các ô khách đã tự
+ * xác nhận; nếu không có thì tự tách từ chuỗi `address`. Nếu không tìm được đường thì
+ * trả về tâm thị trấn/mã bưu điện với `approximate: true`.
+ */
+export async function geocodeAddress(address, structured = null) {
+  const typedQuery = (address || '').trim();
+  const trusted = hasStructuredFields(structured);
+  const fields = trusted ? trimFields(structured) : parseHungarianAddress(typedQuery);
+
+  const attempts = buildGeocodeAttempts(typedQuery, fields, trusted);
+  if (attempts.length === 0) {
     throw new GeocodeError('ADDRESS_NOT_FOUND', 'Empty address');
   }
 
-  const data = await fetchNominatim('search', { q: query, countrycodes: 'hu', limit: '5' });
-  const best = Array.isArray(data) ? pickBestResult(data, null) : null;
-  if (!best) {
-    throw new GeocodeError('ADDRESS_NOT_FOUND', `Address not found: ${query}`);
+  for (const { params, expected, approximate } of attempts) {
+    const data = await fetchNominatim('search', params);
+    // Kết quả cấp thành phố ở các bước tìm đường bị bỏ qua để rơi xuống bước mã bưu điện
+    // (chính xác hơn tâm Budapest)
+    const candidates = Array.isArray(data)
+      ? (approximate ? data : data.filter((r) => r.address?.road || r.address?.pedestrian || r.address?.house_number))
+      : [];
+    const best = candidates.length ? pickBestResult(candidates, expected) : null;
+    if (best) return mergeTypedFields(best, fields, approximate);
   }
-  return best;
+
+  throw new GeocodeError('ADDRESS_NOT_FOUND', `Address not found: ${typedQuery || buildStructuredAddressQuery(fields)}`);
 }
 
 export async function reverseGeocodeCoordinates(latitude, longitude) {
@@ -332,7 +404,7 @@ function buildOutOfRangeResult({ distance, formattedAddress, zones }) {
   };
 }
 
-async function resolveDeliveryFromCoords(customerLat, customerLng, formattedAddress, addressComponents = null) {
+async function resolveDeliveryFromCoords(customerLat, customerLng, formattedAddress, addressComponents = null, approximate = false) {
   const restaurant = await restaurantLocationModel.findOne({
     isActive: true,
     isPrimary: true
@@ -372,6 +444,7 @@ async function resolveDeliveryFromCoords(customerLat, customerLng, formattedAddr
       distance: parseFloat(distance.toFixed(2)),
       address: formattedAddress,
       addressComponents,
+      approximate,
       coordinates: {
         latitude: customerLat,
         longitude: customerLng
@@ -435,7 +508,8 @@ export async function resolveDelivery({
         geocoded.latitude,
         geocoded.longitude,
         geocoded.formattedAddress,
-        geocoded.components
+        geocoded.components,
+        geocoded.approximate
       );
     }
 
