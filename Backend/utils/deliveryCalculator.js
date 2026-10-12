@@ -3,19 +3,127 @@ import restaurantLocationModel from "../models/restaurantLocationModel.js";
 import { extractAddressComponents, formatShortAddress, cleanDisplayName } from "./addressFormat.js";
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
-const DEFAULT_MAP_CENTER = { latitude: 47.4979, longitude: 19.0402 };
 const NOMINATIM_USER_AGENT = process.env.NOMINATIM_USER_AGENT || 'FoodDeliveryApp/1.0';
+const NOMINATIM_TIMEOUT_MS = 6000;
+// Nominatim công cộng giới hạn 1 request/giây, vượt quá sẽ bị chậm hoặc chặn hẳn
+const NOMINATIM_MIN_INTERVAL_MS = 1100;
+const NOMINATIM_MAX_PENDING = 6;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 2000;
 
-const nominatimResultToAddress = (result = {}) => {
-  const latitude = parseFloat(result.lat) || DEFAULT_MAP_CENTER.latitude;
-  const longitude = parseFloat(result.lon) || DEFAULT_MAP_CENTER.longitude;
+export class GeocodeError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+}
+
+const GEOCODE_ERROR_MESSAGES = {
+  ADDRESS_NOT_FOUND: {
+    message: "Không tìm thấy địa chỉ này. Vui lòng kiểm tra lại tên đường, thành phố, mã bưu điện hoặc ghim vị trí trên bản đồ.",
+    messageEn: "We couldn't find this address. Please check the street, city and zip code, or pin your location on the map.",
+    messageHu: "Nem találjuk ezt a címet. Kérjük, ellenőrizze az utcát, a várost és az irányítószámot, vagy jelölje meg a helyet a térképen."
+  },
+  GEOCODE_UNAVAILABLE: {
+    message: "Dịch vụ bản đồ đang chậm, chưa tính được phí giao hàng. Vui lòng thử lại sau vài giây hoặc ghim vị trí trên bản đồ.",
+    messageEn: "The map service is slow right now, so the delivery fee couldn't be calculated. Please try again in a few seconds or pin your location on the map.",
+    messageHu: "A térképszolgáltatás most lassú, ezért nem sikerült kiszámolni a szállítási díjat. Kérjük, próbálja újra néhány másodperc múlva, vagy jelölje meg a helyet a térképen."
+  }
+};
+
+export function geocodeErrorResult(error) {
+  const code = error?.code === 'ADDRESS_NOT_FOUND' ? 'ADDRESS_NOT_FOUND' : 'GEOCODE_UNAVAILABLE';
+  return { success: false, code, ...GEOCODE_ERROR_MESSAGES[code] };
+}
+
+const cache = new Map();
+let pendingCount = 0;
+let lastRequestAt = 0;
+let queue = Promise.resolve();
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function waitForSlot() {
+  const slot = queue.then(async () => {
+    const wait = lastRequestAt + NOMINATIM_MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastRequestAt = Date.now();
+  });
+  queue = slot.catch(() => {});
+  return slot;
+}
+
+async function fetchNominatimUncached(url) {
+  if (pendingCount >= NOMINATIM_MAX_PENDING) {
+    throw new GeocodeError('GEOCODE_UNAVAILABLE', 'Too many pending Nominatim requests');
+  }
+  pendingCount += 1;
+  try {
+    await waitForSlot();
+    const response = await fetch(url, {
+      headers: { 'User-Agent': NOMINATIM_USER_AGENT },
+      signal: AbortSignal.timeout(NOMINATIM_TIMEOUT_MS)
+    });
+    if (!response.ok) {
+      throw new GeocodeError('GEOCODE_UNAVAILABLE', `Nominatim API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if (error instanceof GeocodeError) throw error;
+    throw new GeocodeError('GEOCODE_UNAVAILABLE', `Nominatim request failed: ${error.message}`);
+  } finally {
+    pendingCount -= 1;
+  }
+}
+
+/**
+ * Gọi Nominatim với timeout, giới hạn 1 request/giây và cache (dùng chung promise
+ * cho các request trùng nhau đang chạy).
+ */
+export function fetchNominatim(path, params) {
+  const search = new URLSearchParams({ format: 'json', addressdetails: '1', 'accept-language': 'en', ...params });
+  const url = `${NOMINATIM_BASE_URL}/${path}?${search.toString()}`;
+
+  const cached = cache.get(url);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.promise;
+  }
+
+  const promise = fetchNominatimUncached(url);
+  cache.set(url, { promise, expiresAt: Date.now() + CACHE_TTL_MS });
+  promise.catch(() => cache.delete(url));
+
+  if (cache.size > CACHE_MAX_ENTRIES) {
+    cache.delete(cache.keys().next().value);
+  }
+  return promise;
+}
+
+const parseCoordinate = (value) => {
+  const num = typeof value === 'number' ? value : parseFloat(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+export function normalizeCoordinates(coords) {
+  if (!coords) return null;
+  const latitude = parseCoordinate(coords.latitude ?? coords.lat);
+  const longitude = parseCoordinate(coords.longitude ?? coords.lng ?? coords.lon);
+  if (latitude == null || longitude == null) return null;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return { latitude, longitude };
+}
+
+export const nominatimResultToAddress = (result = {}) => {
+  const coords = normalizeCoordinates({ latitude: result.lat, longitude: result.lon });
+  if (!coords) return null;
   const components = extractAddressComponents(result);
   const shortAddress = formatShortAddress(components);
   const formattedAddress = shortAddress || cleanDisplayName(result.display_name) || "";
 
   return {
-    latitude,
-    longitude,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
     formattedAddress,
     components,
   };
@@ -39,63 +147,110 @@ export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-export async function geocodeAddress(address) {
-  try {
-    const encodedAddress = encodeURIComponent(address);
-    const url = `${NOMINATIM_BASE_URL}/search?q=${encodedAddress}&format=json&limit=5&countrycodes=hu&addressdetails=1&accept-language=en`;
+const normalizeText = (value) => (value || '')
+  .toString()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .trim();
 
-    const response = await fetch(url, {
-      headers: { 'User-Agent': NOMINATIM_USER_AGENT }
-    });
+function matchesExpectedLocality(parsed, expected) {
+  if (!expected) return true;
+  const expectedZip = (expected.zipcode || '').toString().trim();
+  const expectedCity = normalizeText(expected.city);
+  const zip = (parsed.components.zipcode || '').toString().trim();
+  const cities = [parsed.components.city, parsed.components.town, parsed.components.village]
+    .map(normalizeText)
+    .filter(Boolean);
 
-    if (!response.ok) {
-      throw new Error(`Nominatim API error: ${response.status} ${response.statusText}`);
-    }
+  const canCheckZip = Boolean(expectedZip && zip);
+  const canCheckCity = Boolean(expectedCity && cities.length > 0);
+  if (!canCheckZip && !canCheckCity) return true;
 
-    const data = await response.json();
-    if (!data || data.length === 0) {
-      throw new Error("Address not found");
-    }
+  // Mã bưu điện trên OSM ở Hungary hay lệch, nên chỉ cần khớp mã bưu điện HOẶC thành phố
+  if (canCheckZip && zip === expectedZip) return true;
+  return canCheckCity && cities.some((c) => c === expectedCity || c.includes(expectedCity) || expectedCity.includes(c));
+}
 
-    let bestResult = data[0];
-    let bestParsed = nominatimResultToAddress(bestResult);
+function pickBestResult(results, expected) {
+  const parsed = results.map(nominatimResultToAddress).filter(Boolean);
+  if (parsed.length === 0) return null;
 
-    for (const result of data) {
-      const parsed = nominatimResultToAddress(result);
-      if (parsed.components.houseNumber && parsed.components.houseNumber.trim().length > 0) {
-        bestResult = result;
-        bestParsed = parsed;
-        break;
-      }
-    }
+  const matching = expected ? parsed.filter((p) => matchesExpectedLocality(p, expected)) : parsed;
+  if (expected && matching.length === 0) return null;
 
-    return bestParsed;
-  } catch (error) {
-    throw new Error(`Failed to geocode address: ${error.message}`);
+  // Giữ thứ tự xếp hạng của Nominatim; chỉ ưu tiên kết quả có số nhà trong cùng khu vực
+  return matching.find((p) => p.components.houseNumber?.trim()) || matching[0];
+}
+
+// Địa chỉ đã lưu hay để cả chuỗi đầy đủ trong `street` ("Kossuth utca 5, 1051 Budapest"),
+// nên chỉ lấy phần trước dấu phẩy và không lặp lại số nhà nếu đã có
+function structuredStreetLine({ street = '', houseNumber = '' } = {}) {
+  const streetPart = (street || '').toString().split(',')[0].trim();
+  const house = (houseNumber || '').toString().trim();
+  if (!house || streetPart.toLowerCase().split(/\s+/).includes(house.toLowerCase())) {
+    return streetPart;
   }
+  return `${house} ${streetPart}`.trim();
+}
+
+const hasStructuredFields = (fields) => Boolean(
+  fields && (fields.street || '').trim() && ((fields.city || '').trim() || (fields.zipcode || '').toString().trim())
+);
+
+/**
+ * Geocode địa chỉ. Nếu có `structured` (street/houseNumber/city/zipcode) thì dùng
+ * tìm kiếm có cấu trúc và chỉ chấp nhận kết quả cùng mã bưu điện/thành phố.
+ */
+export async function geocodeAddress(address, structured = null) {
+  if (hasStructuredFields(structured)) {
+    const city = (structured.city || '').trim();
+    const zipcode = (structured.zipcode || '').toString().trim();
+    const baseParams = { street: structuredStreetLine(structured), countrycodes: 'hu', limit: '5' };
+    const attempts = [];
+    if (city || zipcode) {
+      attempts.push({ ...baseParams, ...(city && { city }), ...(zipcode && { postalcode: zipcode }) });
+    }
+    // Mã bưu điện khách nhập có thể khác mã trên OSM → thử lại chỉ với thành phố
+    if (city && zipcode) {
+      attempts.push({ ...baseParams, city });
+    }
+
+    for (const params of attempts) {
+      const data = await fetchNominatim('search', params);
+      const best = Array.isArray(data) ? pickBestResult(data, structured) : null;
+      if (best) return best;
+    }
+
+    // OSM hay thiếu số nhà: thử lại theo chuỗi đầy đủ nhưng vẫn bắt buộc cùng khu vực
+    const fallbackQuery = buildStructuredAddressQuery(structured);
+    const fallback = await fetchNominatim('search', { q: fallbackQuery, countrycodes: 'hu', limit: '10' });
+    const fallbackBest = Array.isArray(fallback) ? pickBestResult(fallback, structured) : null;
+    if (fallbackBest) return fallbackBest;
+
+    throw new GeocodeError('ADDRESS_NOT_FOUND', `Address not found: ${fallbackQuery}`);
+  }
+
+  const query = (address || '').trim();
+  if (!query) {
+    throw new GeocodeError('ADDRESS_NOT_FOUND', 'Empty address');
+  }
+
+  const data = await fetchNominatim('search', { q: query, countrycodes: 'hu', limit: '5' });
+  const best = Array.isArray(data) ? pickBestResult(data, null) : null;
+  if (!best) {
+    throw new GeocodeError('ADDRESS_NOT_FOUND', `Address not found: ${query}`);
+  }
+  return best;
 }
 
 export async function reverseGeocodeCoordinates(latitude, longitude) {
-  try {
-    const url = `${NOMINATIM_BASE_URL}/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=en`;
-
-    const response = await fetch(url, {
-      headers: { 'User-Agent': NOMINATIM_USER_AGENT }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Nominatim API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    if (!data || !data.lat || !data.lon) {
-      throw new Error("Reverse geocoding failed");
-    }
-
-    return nominatimResultToAddress(data);
-  } catch (error) {
-    throw new Error(`Failed to reverse geocode coordinates: ${error.message}`);
+  const data = await fetchNominatim('reverse', { lat: String(latitude), lon: String(longitude) });
+  const parsed = data && !data.error ? nominatimResultToAddress(data) : null;
+  if (!parsed) {
+    throw new GeocodeError('ADDRESS_NOT_FOUND', 'Reverse geocoding failed');
   }
+  return parsed;
 }
 
 export function buildStructuredAddressQuery({
@@ -105,7 +260,7 @@ export function buildStructuredAddressQuery({
   zipcode = '',
   country = 'Hungary'
 } = {}) {
-  const streetLine = [houseNumber, street].filter(Boolean).join(' ').trim();
+  const streetLine = structuredStreetLine({ street, houseNumber });
   return [streetLine, zipcode, city, country].filter(Boolean).join(', ');
 }
 
@@ -210,76 +365,68 @@ async function resolveDeliveryFromCoords(customerLat, customerLng, formattedAddr
 
 /**
  * Resolve delivery zone + fee from address input.
+ * Toạ độ khách đã chọn (gợi ý / ghim bản đồ / địa chỉ đã lưu) luôn được ưu tiên;
+ * chỉ geocode theo chữ khi không có toạ độ hợp lệ.
+ * Lỗi geocode được trả về dạng `{ success: false, code }` thay vì throw.
  * @param {Object} options
  * @param {string} [options.address] - Free-text address for geocoding
  * @param {number} [options.latitude]
  * @param {number} [options.longitude]
- * @param {Object} [options.structuredAddress] - Confirmed street/house/city/zip (used at order placement)
- * @param {boolean} [options.preferStructuredGeocode=false] - Geocode structured fields first (order validation)
+ * @param {Object} [options.structuredAddress] - street/houseNumber/city/zipcode (+ optional coordinates)
  */
 export async function resolveDelivery({
   address,
   latitude,
   longitude,
-  structuredAddress,
-  preferStructuredGeocode = false
+  structuredAddress
 } = {}) {
-  if (preferStructuredGeocode && structuredAddress?.street && structuredAddress?.city && structuredAddress?.zipcode) {
-    const query = buildStructuredAddressQuery(structuredAddress);
-    try {
-      const geocoded = await geocodeAddress(query);
-      return resolveDeliveryFromCoords(
+  try {
+    const coords =
+      normalizeCoordinates({ latitude, longitude }) ||
+      normalizeCoordinates(structuredAddress?.coordinates);
+
+    if (coords) {
+      if (address) {
+        return await resolveDeliveryFromCoords(coords.latitude, coords.longitude, address);
+      }
+
+      try {
+        const reverse = await reverseGeocodeCoordinates(coords.latitude, coords.longitude);
+        return await resolveDeliveryFromCoords(
+          coords.latitude,
+          coords.longitude,
+          reverse.formattedAddress,
+          reverse.components
+        );
+      } catch (geoErr) {
+        console.warn("⚠️ Reverse geocode failed, using raw coordinates:", geoErr?.message);
+        return await resolveDeliveryFromCoords(
+          coords.latitude,
+          coords.longitude,
+          `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
+        );
+      }
+    }
+
+    if (hasStructuredFields(structuredAddress) || address) {
+      const geocoded = await geocodeAddress(address, hasStructuredFields(structuredAddress) ? structuredAddress : null);
+      return await resolveDeliveryFromCoords(
         geocoded.latitude,
         geocoded.longitude,
         geocoded.formattedAddress,
         geocoded.components
       );
-    } catch (geoErr) {
-      console.warn("⚠️ Structured address geocode failed, falling back:", geoErr?.message);
-    }
-  }
-
-  const resolvedLat = latitude ?? structuredAddress?.coordinates?.latitude;
-  const resolvedLng = longitude ?? structuredAddress?.coordinates?.longitude;
-
-  if (resolvedLat != null && resolvedLng != null) {
-    const customerLat = parseFloat(resolvedLat);
-    const customerLng = parseFloat(resolvedLng);
-
-    if (address) {
-      return resolveDeliveryFromCoords(customerLat, customerLng, address);
     }
 
-    try {
-      const reverse = await reverseGeocodeCoordinates(customerLat, customerLng);
-      return resolveDeliveryFromCoords(
-        customerLat,
-        customerLng,
-        reverse.formattedAddress,
-        reverse.components
-      );
-    } catch (geoErr) {
-      console.warn("⚠️ Reverse geocode failed, using raw coordinates:", geoErr?.message);
-      return resolveDeliveryFromCoords(
-        customerLat,
-        customerLng,
-        `${resolvedLat}, ${resolvedLng}`
-      );
+    return {
+      success: false,
+      message: "Please provide either address or latitude/longitude"
+    };
+  } catch (error) {
+    if (error instanceof GeocodeError) {
+      console.warn(`⚠️ Geocode error (${error.code}):`, error.message);
+      return geocodeErrorResult(error);
     }
+    throw error;
   }
-
-  if (address) {
-    const geocoded = await geocodeAddress(address);
-    return resolveDeliveryFromCoords(
-      geocoded.latitude,
-      geocoded.longitude,
-      geocoded.formattedAddress,
-      geocoded.components
-    );
-  }
-
-  return {
-    success: false,
-    message: "Please provide either address or latitude/longitude"
-  };
 }

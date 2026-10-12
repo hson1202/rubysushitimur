@@ -1,27 +1,13 @@
 import deliveryZoneModel from "../models/deliveryZoneModel.js";
 import restaurantLocationModel from "../models/restaurantLocationModel.js";
 import RestaurantInfo from "../models/restaurantInfoModel.js";
-import { extractAddressComponents, formatShortAddress, cleanDisplayName } from "../utils/addressFormat.js";
-import { resolveDelivery } from "../utils/deliveryCalculator.js";
-
-const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
-const DEFAULT_MAP_CENTER = { latitude: 47.4979, longitude: 19.0402 };
-const NOMINATIM_USER_AGENT = process.env.NOMINATIM_USER_AGENT || 'FoodDeliveryApp/1.0';
-
-const nominatimResultToAddress = (result = {}) => {
-  const latitude = parseFloat(result.lat) || DEFAULT_MAP_CENTER.latitude;
-  const longitude = parseFloat(result.lon) || DEFAULT_MAP_CENTER.longitude;
-  const components = extractAddressComponents(result);
-  const shortAddress = formatShortAddress(components);
-  const formattedAddress = shortAddress || cleanDisplayName(result.display_name) || "";
-
-  return {
-    latitude,
-    longitude,
-    formattedAddress,
-    components,
-  };
-};
+import {
+  resolveDelivery,
+  fetchNominatim,
+  nominatimResultToAddress,
+  GeocodeError,
+  geocodeErrorResult
+} from "../utils/deliveryCalculator.js";
 
 // ========== GET DELIVERY ZONES ==========
 const getDeliveryZones = async (req, res) => {
@@ -53,9 +39,10 @@ const calculateDeliveryFee = async (req, res) => {
       });
     }
 
-    const { address, latitude, longitude } = req.body;
+    const { address, latitude, longitude, street, houseNumber, city, zipcode } = req.body;
+    const structuredAddress = street ? { street, houseNumber, city, zipcode } : undefined;
 
-    const result = await resolveDelivery({ address, latitude, longitude });
+    const result = await resolveDelivery({ address, latitude, longitude, structuredAddress });
 
     if (!result.success) {
       if (result.message === "Restaurant location not configured") {
@@ -89,45 +76,28 @@ const autocompleteAddress = async (req, res) => {
       });
     }
 
-    const encodedQuery = encodeURIComponent(query);
-    // Nominatim search API
-    // countrycodes=hu: giới hạn trong Hungary
-    // addressdetails=1: lấy chi tiết địa chỉ
-    // limit=15: lấy nhiều kết quả để filter
-    let url = `${NOMINATIM_BASE_URL}/search?q=${encodedQuery}&format=json&limit=15&countrycodes=hu&addressdetails=1&accept-language=en`;
+    // countrycodes=hu: giới hạn trong Hungary; limit=15: lấy nhiều kết quả để filter
+    const params = { q: query, countrycodes: 'hu', limit: '15' };
 
-    // Thêm proximity nếu có (Nominatim dùng viewbox thay vì proximity)
-    // viewbox=min_lon,min_lat,max_lon,max_lat
+    // Nominatim dùng viewbox (min_lon,min_lat,max_lon,max_lat) thay vì proximity
     if (proximity) {
       const [lng, lat] = proximity.split(',').map(parseFloat);
       if (!isNaN(lng) && !isNaN(lat)) {
-        // Tạo viewbox xung quanh điểm proximity (~50km) để ưu tiên kết quả gần nhà hàng
-        // KHÔNG dùng bounded=1 vì sẽ chặn hoàn toàn địa chỉ ngoài viewbox,
-        // làm các zone giao hàng mới (khoảng cách xa hơn) không tìm được địa chỉ
-        const offset = 0.5; // ~55km - đủ rộng để bao phủ mọi zone giao hàng thực tế
-        const viewbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
-        url += `&viewbox=${viewbox}`;
+        // Viewbox ~55km quanh nhà hàng để ưu tiên kết quả gần. KHÔNG dùng bounded=1
+        // vì sẽ chặn hoàn toàn địa chỉ ngoài viewbox của các zone xa hơn
+        const offset = 0.5;
+        params.viewbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
       }
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': NOMINATIM_USER_AGENT
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Nominatim API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await fetchNominatim('search', params);
 
     let suggestions = [];
 
-    // Parse kết quả từ Nominatim
-    if (data && data.length > 0) {
+    if (Array.isArray(data) && data.length > 0) {
       suggestions = data.map((result, index) => {
         const parsed = nominatimResultToAddress(result);
+        if (!parsed) return null;
 
         // Phân loại ưu tiên:
         // Priority 1: Có số nhà rõ ràng
@@ -151,7 +121,7 @@ const autocompleteAddress = async (req, res) => {
           priority: priority,
           hasHouseNumber: hasHouseNumber
         };
-      });
+      }).filter(Boolean);
     }
 
     // ✨ Sắp xếp: ưu tiên địa chỉ có số nhà trước
@@ -173,16 +143,14 @@ const autocompleteAddress = async (req, res) => {
     });
 
   } catch (error) {
+    if (error instanceof GeocodeError) {
+      console.warn(`⚠️ Autocomplete geocode error (${error.code}):`, error.message);
+      return res.json({ ...geocodeErrorResult(error), data: [] });
+    }
     console.error("❌ Autocomplete error:", error);
-    console.error("Error details:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
     res.status(500).json({
       success: false,
-      message: error.message,
-      details: error.response?.data || "Network error or Nominatim API issue"
+      message: error.message
     });
   }
 };

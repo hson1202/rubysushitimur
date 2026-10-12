@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from 'react'
+import { useState, useEffect, useContext, useRef, useCallback } from 'react'
 import './PlaceOrder.css'
 import { StoreContext, CHECKOUT_DRAFT_KEY, hasStoredCartItems } from '../../Context/StoreContext'
 import { useAuth } from '../../Context/AuthContext'
@@ -19,6 +19,15 @@ const EMPTY_CONTACT = {
   phone: "",
   note: "",
   preferredDeliveryTime: ""
+}
+
+const toCoordinates = (coords) => {
+  if (!coords) return null
+  const latitude = Number(coords.latitude ?? coords.lat)
+  const longitude = Number(coords.longitude ?? coords.lng)
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  if (latitude === 0 && longitude === 0) return null
+  return { latitude, longitude }
 }
 
 const readCheckoutDraft = () => {
@@ -52,6 +61,9 @@ const PlaceOrder = () => {
   
   // Delivery state
   const [deliveryInfo, setDeliveryInfo] = useState(checkoutDraft?.deliveryInfo || null);
+  const [isAddressCalculating, setIsAddressCalculating] = useState(false);
+  const [isSavedAddressCalculating, setIsSavedAddressCalculating] = useState(false);
+  const savedCalcIdRef = useRef(0);
   const [restaurantLocation, setRestaurantLocation] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState(checkoutDraft?.deliveryAddress || null);
   
@@ -207,44 +219,7 @@ const PlaceOrder = () => {
                   }));
                 }
                 
-                // Auto-calculate delivery fee for default address using full address string
-                try {
-                  const fullAddress = defaultAddr.street; // street is stored as full address
-                  const calcResponse = await axios.post(url + '/api/delivery/calculate', {
-                    address: fullAddress
-                  });
-                  
-                  if (calcResponse.data.success) {
-                    handleDeliveryCalculated(calcResponse.data.data);
-                  } else {
-                    setDeliveryInfo(null);
-                  }
-                } catch (error) {
-                  console.error('Error calculating delivery for default address:', error);
-                  setDeliveryInfo(null);
-                }
-                /* OLD IMPLEMENTATION – required coordinates, so it never ran for address-book addresses (no coords)
-                if (defaultAddr.coordinates && restaurantLocation) {
-                  try {
-                    // Dùng đúng 1 dòng địa chỉ đã lưu (street đang đóng vai trò full address)
-                    const fullAddress = defaultAddr.street;
-                    const calcResponse = await axios.post(url + '/api/delivery/calculate', {
-                      address: fullAddress,
-                      latitude: defaultAddr.coordinates.lat || defaultAddr.coordinates.latitude,
-                      longitude: defaultAddr.coordinates.lng || defaultAddr.coordinates.longitude
-                    });
-                    
-                    if (calcResponse.data.success) {
-                      handleDeliveryCalculated(calcResponse.data.data);
-                    } else {
-                      setDeliveryInfo(null);
-                    }
-                  } catch (error) {
-                    console.error('Error calculating delivery for default address:', error);
-                    setDeliveryInfo(null);
-                  }
-                }
-                */
+                await calculateDeliveryForSavedAddress(defaultAddr);
               }
             }
           }
@@ -277,7 +252,7 @@ const PlaceOrder = () => {
   const placeOrder = async (event) => {
     event.preventDefault();
     
-    if (isSubmitting) return;
+    if (isSubmitting || isFeeCalculating) return;
 
     if (restaurantOpenStatus && !restaurantOpenStatus.isOpen) {
       alert(restaurantOpenStatus.message || t('restaurant.closedNow'));
@@ -554,6 +529,12 @@ const PlaceOrder = () => {
           errorMessage = t('placeOrder.errors.deliveryDisabled');
         } else if (errorCode === 'RESTAURANT_CLOSED') {
           errorMessage = restaurantOpenStatus?.message || t('restaurant.closedNow');
+        } else if (errorCode === 'ADDRESS_NOT_FOUND') {
+          errorMessage = t('placeOrder.form.addressNotFound');
+        } else if (errorCode === 'GEOCODE_UNAVAILABLE') {
+          errorMessage = t('placeOrder.form.geocodeUnavailable');
+        } else if (errorCode === 'DELIVERY_UNAVAILABLE') {
+          errorMessage = t('placeOrder.errors.deliveryZoneNotAvailable');
         } else {
           errorMessage = status >= 500
             ? t('placeOrder.errors.serverError', { status })
@@ -611,6 +592,52 @@ const PlaceOrder = () => {
     setDeliveryInfo(info);
   };
 
+  const handleAddressCalculatingChange = useCallback((calculating) => {
+    setIsAddressCalculating(calculating);
+  }, []);
+
+  // Địa chỉ đã lưu: dùng toạ độ đã lưu nếu có; không thì gửi đủ đường/số nhà/thành phố/mã bưu điện
+  // để backend không đoán nhầm sang một thị trấn khác có cùng tên đường
+  const calculateDeliveryForSavedAddress = async (addr) => {
+    const requestId = ++savedCalcIdRef.current;
+    const savedCoords = toCoordinates(addr?.coordinates);
+    const street = (addr?.street || '').trim();
+    const payload = savedCoords
+      ? { address: street || undefined, ...savedCoords }
+      : {
+          address: [street, [addr?.zipcode, addr?.city].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+          street,
+          houseNumber: addr?.houseNumber || '',
+          city: addr?.city || '',
+          zipcode: addr?.zipcode || ''
+        };
+
+    setDeliveryInfo(null);
+    setIsSavedAddressCalculating(true);
+    try {
+      const response = await axios.post(url + '/api/delivery/calculate', payload, { timeout: 20000 });
+      if (requestId !== savedCalcIdRef.current) return;
+
+      if (response.data.success) {
+        const info = response.data.data;
+        handleDeliveryCalculated(info);
+        if (!savedCoords && info.coordinates) {
+          setDeliveryAddress((prev) => (prev ? { ...prev, coordinates: info.coordinates } : prev));
+        }
+      } else {
+        setDeliveryInfo(null);
+      }
+    } catch (error) {
+      if (requestId !== savedCalcIdRef.current) return;
+      console.error('Error calculating delivery for saved address:', error);
+      setDeliveryInfo(null);
+    } finally {
+      if (requestId === savedCalcIdRef.current) {
+        setIsSavedAddressCalculating(false);
+      }
+    }
+  };
+
   // Handle delivery address change
   const handleDeliveryAddressChange = (addressData) => {
     setDeliveryAddress((prev) => ({
@@ -645,50 +672,8 @@ const PlaceOrder = () => {
       }));
     }
     
-    // Manually trigger delivery calculation using full address string
-    try {
-      const fullAddress = address.street; // street is stored as full address
-      const response = await axios.post(url + '/api/delivery/calculate', {
-        address: fullAddress
-      });
-      
-      if (response.data.success) {
-        handleDeliveryCalculated(response.data.data);
-      } else {
-        setDeliveryInfo(null);
-      }
-    } catch (error) {
-      console.error('Error calculating delivery for selected address:', error);
-      setDeliveryInfo(null);
-    }
-
-    /* OLD IMPLEMENTATION – required coordinates so it never ran for normal saved addresses
-    if (address.coordinates && restaurantLocation) {
-      try {
-        // Dùng đúng 1 dòng địa chỉ đã lưu (street đang đóng vai trò full address)
-        const fullAddress = address.street;
-        const response = await axios.post(url + '/api/delivery/calculate', {
-          address: fullAddress,
-          latitude: address.coordinates.lat || address.coordinates.latitude,
-          longitude: address.coordinates.lng || address.coordinates.longitude
-        });
-        
-        if (response.data.success) {
-          handleDeliveryCalculated(response.data.data);
-        } else {
-          setDeliveryInfo(null);
-        }
-      } catch (error) {
-        console.error('Error calculating delivery for selected address:', error);
-        setDeliveryInfo(null);
-      }
-    } else {
-      // Reset delivery info if no coordinates
-      setDeliveryInfo(null);
-    }
-    */
-    
     setShowAddressModal(false);
+    await calculateDeliveryForSavedAddress(address);
   };
 
   // Determine if we should show full form or address card
@@ -701,6 +686,10 @@ const PlaceOrder = () => {
   
   // Helper to check if any address has been selected (for warning condition)
   const hasAnyAddressSelected = isDelivery && (!!deliveryAddress?.address || !!selectedAddressId);
+
+  const isFeeCalculating = isDelivery && (
+    isSavedAddressCalculating || (isAddressCalculating && !shouldShowAddressCard)
+  );
 
   const hasCartItems = Object.values(cartItems || {}).some((qty) => Number(qty) > 0)
   const [cartRestoreChecked, setCartRestoreChecked] = useState(false)
@@ -824,6 +813,8 @@ const PlaceOrder = () => {
                       if (next === 'delivery' && !deliveryEnabled) return;
                       setFulfillmentType(next);
                       if (next !== 'delivery') {
+                        savedCalcIdRef.current += 1;
+                        setIsSavedAddressCalculating(false);
                         setDeliveryInfo(null);
                         setDeliveryAddress(null);
                         setSelectedAddressId(null);
@@ -938,6 +929,7 @@ const PlaceOrder = () => {
                           country: defaultAddr.country || '',
                           coordinates: defaultAddr.coordinates || null
                         });
+                        calculateDeliveryForSavedAddress(defaultAddr);
                       }
                     }}
                   >
@@ -950,6 +942,7 @@ const PlaceOrder = () => {
                 addressData={deliveryAddress}
                 onChange={handleDeliveryAddressChange}
                 onDeliveryCalculated={handleDeliveryCalculated}
+                onCalculatingChange={handleAddressCalculatingChange}
                 url={url}
                 restaurantLocation={restaurantLocation}
               />
@@ -1057,7 +1050,9 @@ const PlaceOrder = () => {
                 <p>{t('placeOrder.cart.deliveryFee')}</p>
                 <p>
               {isDelivery
-                ? (deliveryInfo && deliveryInfo.zone ? formatPrice(getDeliveryFee()) : '--')
+                ? (isFeeCalculating
+                  ? t('placeOrder.cart.calculatingShort')
+                  : (deliveryInfo && deliveryInfo.zone ? formatPrice(getDeliveryFee()) : '--'))
                 : '0 Ft'}
                 </p>
               </div>
@@ -1067,9 +1062,16 @@ const PlaceOrder = () => {
                   <p>{formatPrice(getSystemFee())}</p>
                 </div>
               )}
-          {isDelivery && !deliveryInfo && !hasAnyAddressSelected && (
+          {isFeeCalculating && (
                 <div className="min-order-warning">
-                  {t('placeOrder.cart.deliveryFeePrompt')}
+                  {t('placeOrder.form.calculatingFee')}
+                </div>
+              )}
+          {isDelivery && !isFeeCalculating && !deliveryInfo && (
+                <div className="min-order-warning">
+                  {hasAnyAddressSelected
+                    ? t('placeOrder.cart.deliveryFeeUnavailable')
+                    : t('placeOrder.cart.deliveryFeePrompt')}
                 </div>
               )}
           {isDelivery && deliveryInfo && deliveryInfo.zone && (
@@ -1095,10 +1097,12 @@ const PlaceOrder = () => {
                 <b>{formatPrice(getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + getDeliveryFee() + getSystemFee())}</b>
               </div>
             </div>
-            <button type='submit' disabled={isSubmitting || isRestaurantClosed} className="desktop-submit-btn">
+            <button type='submit' disabled={isSubmitting || isRestaurantClosed || isFeeCalculating} className="desktop-submit-btn">
               {isRestaurantClosed
                 ? (restaurantOpenStatus.message || t('restaurant.closedNow'))
-                : (isSubmitting ? t('placeOrder.cart.submitting') : t('placeOrder.cart.proceedButton'))}
+                : (isSubmitting
+                  ? t('placeOrder.cart.submitting')
+                  : (isFeeCalculating ? t('placeOrder.form.calculatingFee') : t('placeOrder.cart.proceedButton')))}
             </button>
           </div>
           
@@ -1107,11 +1111,13 @@ const PlaceOrder = () => {
             <button 
               type='submit' 
               className="mobile-submit-btn"
-              disabled={isSubmitting || isRestaurantClosed}
+              disabled={isSubmitting || isRestaurantClosed || isFeeCalculating}
             >
               {isRestaurantClosed
                 ? (restaurantOpenStatus.message || t('restaurant.closedNow'))
-                : (isSubmitting ? t('placeOrder.cart.submitting') : t('placeOrder.cart.proceedButton'))}
+                : (isSubmitting
+                  ? t('placeOrder.cart.submitting')
+                  : (isFeeCalculating ? t('placeOrder.form.calculatingFee') : t('placeOrder.cart.proceedButton')))}
             </button>
           </div>
         </div>
@@ -1166,6 +1172,8 @@ const PlaceOrder = () => {
                 onClick={() => {
                   setShowAddressModal(false);
                   setUseManualAddress(true);
+                  savedCalcIdRef.current += 1;
+                  setIsSavedAddressCalculating(false);
                   // Clear selected address to allow new entry
                   setSelectedAddressId(null);
                   setDeliveryAddress(null);

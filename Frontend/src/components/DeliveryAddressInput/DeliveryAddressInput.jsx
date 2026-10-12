@@ -36,6 +36,7 @@ const DeliveryAddressInput = ({
   addressData,
   onChange,
   onDeliveryCalculated,
+  onCalculatingChange,
   url,
   restaurantLocation
 }) => {
@@ -44,6 +45,7 @@ const DeliveryAddressInput = ({
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [deliveryInfo, setDeliveryInfo] = useState(null);
   const [error, setError] = useState('');
   const [isManualPickerOpen, setIsManualPickerOpen] = useState(false);
@@ -70,8 +72,33 @@ const DeliveryAddressInput = ({
   const debounceTimer = useRef(null);
   const recalcTimer = useRef(null);
   const inputRef = useRef(null);
+  const calcRequestIdRef = useRef(0);
+  const calcAbortRef = useRef(null);
+  const selectingSuggestionRef = useRef(false);
+  const lastFreeTextQueryRef = useRef('');
   // OpenStreetMap/Nominatim không cần API key, luôn available
   const manualPinAvailable = true;
+
+  useEffect(() => {
+    if (onCalculatingChange) onCalculatingChange(isCalculating);
+  }, [isCalculating, onCalculatingChange]);
+
+  const getLocalizedMessage = useCallback((data, fallbackKey) => {
+    const currentLang = i18n.language || 'hu';
+    if (currentLang === 'en' && data?.messageEn) return data.messageEn;
+    if (currentLang === 'hu' && data?.messageHu) return data.messageHu;
+    if (currentLang === 'vi' && data?.message) return data.message;
+    return t(fallbackKey);
+  }, [t]);
+
+  const cancelPendingCalculation = useCallback(() => {
+    calcRequestIdRef.current += 1;
+    if (calcAbortRef.current) {
+      calcAbortRef.current.abort();
+      calcAbortRef.current = null;
+    }
+    setIsCalculating(false);
+  }, []);
 
   // Đồng bộ lại các ô chi tiết khi component cha nạp một địa chỉ khác từ bên ngoài
   // (ví dụ: chọn địa chỉ đã lưu trong sổ địa chỉ)
@@ -155,20 +182,34 @@ const DeliveryAddressInput = ({
   }, [query, fetchSuggestions, selectedAddress]);
 
   // Calculate delivery fee
-  const calculateDelivery = useCallback(async ({ address, latitude, longitude, components, suppressQueryUpdate, preserveManualFields } = {}) => {
-    setIsLoading(true);
+  const calculateDelivery = useCallback(async ({ address, latitude, longitude, components, structured, suppressQueryUpdate, preserveManualFields } = {}) => {
+    if (calcAbortRef.current) {
+      calcAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    calcAbortRef.current = controller;
+    const requestId = ++calcRequestIdRef.current;
+    const isStale = () => requestId !== calcRequestIdRef.current;
+
+    setIsCalculating(true);
     setError('');
+    setDeliveryInfo(null);
+    if (onDeliveryCalculated) {
+      onDeliveryCalculated(null);
+    }
 
     try {
-      console.log('🚚 Calculating delivery for:', { address, latitude, longitude });
-
       const response = await axios.post(`${url}/api/delivery/calculate`, {
         address,
         latitude,
-        longitude
+        longitude,
+        ...(structured || {})
+      }, {
+        signal: controller.signal,
+        timeout: 20000
       });
 
-      console.log('📦 Delivery calculation response:', response.data);
+      if (isStale()) return;
 
       if (response.data.success) {
         const deliveryData = response.data.data;
@@ -215,23 +256,27 @@ const DeliveryAddressInput = ({
         // Out of delivery range - but still update address if available
         const deliveryData = response.data;
 
-        console.warn('⚠️ Delivery NOT available. Distance:', deliveryData.distance, 'km');
-        console.warn('Reason:', deliveryData.outOfRange ? 'Out of range' : 'Unknown');
+        console.warn('⚠️ Delivery NOT available:', deliveryData.code || (deliveryData.outOfRange ? 'OUT_OF_RANGE' : 'UNKNOWN'), deliveryData.distance);
 
-        // Lấy thông báo phù hợp với ngôn ngữ hiện tại
-        let errorMessage = deliveryData.message || t('placeOrder.form.deliveryNotAvailable');
-        const currentLang = i18n.language || 'hu';
-        if (currentLang === 'en' && deliveryData.messageEn) {
-          errorMessage = deliveryData.messageEn;
-        } else if (currentLang === 'hu' && deliveryData.messageHu) {
-          errorMessage = deliveryData.messageHu;
-        } else if (currentLang === 'vi' && deliveryData.message) {
-          errorMessage = deliveryData.message;
+        let errorMessage;
+        if (deliveryData.code === 'ADDRESS_NOT_FOUND') {
+          errorMessage = t('placeOrder.form.addressNotFound');
+        } else if (deliveryData.code === 'GEOCODE_UNAVAILABLE') {
+          errorMessage = t('placeOrder.form.geocodeUnavailable');
+        } else {
+          errorMessage = getLocalizedMessage(deliveryData, 'placeOrder.form.deliveryNotAvailable');
         }
 
-        console.log('❌ Error message to display:', errorMessage);
-
-        if (deliveryData.address) {
+        if (deliveryData.address && preserveManualFields) {
+          const fallbackCoords = deliveryData.coordinates;
+          if (onChange && fallbackCoords) {
+            onChange({
+              coordinates: fallbackCoords,
+              latitude: fallbackCoords.latitude,
+              longitude: fallbackCoords.longitude
+            });
+          }
+        } else if (deliveryData.address) {
           const currentCoords =
             typeof latitude === 'number' && typeof longitude === 'number'
               ? { latitude, longitude }
@@ -260,26 +305,23 @@ const DeliveryAddressInput = ({
         }
 
         setError(errorMessage);
-        setDeliveryInfo(null);
-        if (onDeliveryCalculated) {
-          onDeliveryCalculated(null);
-        }
       }
     } catch (err) {
-      console.error('❌ Error calculating delivery:', err);
-      console.error('Response:', err.response?.data);
-      setError(t('placeOrder.form.deliveryCalculationError'));
-      setDeliveryInfo(null);
-      if (onDeliveryCalculated) {
-        onDeliveryCalculated(null);
-      }
-      if (typeof latitude === 'number' && typeof longitude === 'number') {
+      if (isStale() || axios.isCancel(err)) return;
+      console.error('❌ Error calculating delivery:', err, err.response?.data);
+      setError(err.code === 'ECONNABORTED'
+        ? t('placeOrder.form.geocodeUnavailable')
+        : t('placeOrder.form.deliveryCalculationError'));
+      if (!address && !suppressQueryUpdate && typeof latitude === 'number' && typeof longitude === 'number') {
         setQuery(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
       }
     } finally {
-      setIsLoading(false);
+      if (!isStale()) {
+        calcAbortRef.current = null;
+        setIsCalculating(false);
+      }
     }
-  }, [url, onDeliveryCalculated, onChange, selectedAddress, t]);
+  }, [url, onDeliveryCalculated, onChange, selectedAddress, t, getLocalizedMessage]);
 
   const buildStructuredQuery = useCallback((fields) => {
     const streetLine = [fields.houseNumber, fields.street].filter(Boolean).join(' ').trim();
@@ -296,7 +338,17 @@ const DeliveryAddressInput = ({
     recalcTimer.current = setTimeout(() => {
       const addressQuery = buildStructuredQuery(fields);
       if (addressQuery.length >= 5) {
-        calculateDelivery({ address: addressQuery, suppressQueryUpdate: true, preserveManualFields: true });
+        calculateDelivery({
+          address: addressQuery,
+          structured: {
+            street: fields.street,
+            houseNumber: fields.houseNumber,
+            city: fields.city,
+            zipcode: fields.zipcode
+          },
+          suppressQueryUpdate: true,
+          preserveManualFields: true
+        });
       }
     }, 600);
   }, [buildStructuredQuery, calculateDelivery]);
@@ -319,11 +371,17 @@ const DeliveryAddressInput = ({
       if (recalcTimer.current) {
         clearTimeout(recalcTimer.current);
       }
+      if (calcAbortRef.current) {
+        calcAbortRef.current.abort();
+      }
     };
   }, []);
 
   // Handle suggestion selection
   const handleSelectSuggestion = (suggestion) => {
+    if (recalcTimer.current) {
+      clearTimeout(recalcTimer.current);
+    }
     setQuery(suggestion.address);
     setSelectedAddress({
       address: suggestion.address,
@@ -362,39 +420,51 @@ const DeliveryAddressInput = ({
     setDeliveryInfo(null);
     setError('');
     setShowDetailFields(false);
+    selectingSuggestionRef.current = false;
+    lastFreeTextQueryRef.current = '';
+    if (recalcTimer.current) {
+      clearTimeout(recalcTimer.current);
+    }
+    cancelPendingCalculation();
+    if (onDeliveryCalculated) {
+      onDeliveryCalculated(null);
+    }
 
     if (onChange) {
       onChange(buildAddressPayload({ address: newValue }));
     }
   };
 
-  // Handle input blur (auto-calculate if typed but not selected)
+  const calculateFromTypedQuery = (options = {}) => {
+    const trimmed = query.trim();
+    if (selectedAddress || trimmed.length < 3 || trimmed === lastFreeTextQueryRef.current) return;
+    lastFreeTextQueryRef.current = trimmed;
+    setShowSuggestions(false);
+    calculateDelivery({ address: trimmed, ...options });
+  };
+
+  // Gõ xong mà không chọn gợi ý → nhờ backend geocode đúng chuỗi đã gõ
   const handleInputBlur = () => {
-    // Delay slightly so a suggestion click (if any) can process first
+    if (selectingSuggestionRef.current) return;
     setTimeout(() => {
-      // If user typed something but hasn't fully selected a valid address from dropdown
-      // We will ask backend to geocode what they typed directly
-      if (query && !selectedAddress && query.length >= 3) {
-        setShowSuggestions(false);
-        calculateDelivery({ address: query, suppressQueryUpdate: true });
-      }
+      if (selectingSuggestionRef.current) return;
+      calculateFromTypedQuery({ suppressQueryUpdate: true });
     }, 200);
   };
 
-  // Handle Enter keypress
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
-      if (query && !selectedAddress && query.length >= 3) {
-        setShowSuggestions(false);
-        calculateDelivery({ address: query });
-      }
+      calculateFromTypedQuery();
     }
   };
 
   const handleManualLocationConfirm = async (coords) => {
     if (!coords) return;
     setIsManualPickerOpen(false);
+    if (recalcTimer.current) {
+      clearTimeout(recalcTimer.current);
+    }
 
     // Set temporary query (will be updated by calculateDelivery after reverse geocoding)
     setQuery(t('placeOrder.form.findingAddress'));
@@ -445,7 +515,7 @@ const DeliveryAddressInput = ({
           className="address-input"
           autoComplete="off"
         />
-        {isLoading && <span className="address-input-spinner" aria-hidden="true" />}
+        {(isLoading || isCalculating) && <span className="address-input-spinner" aria-hidden="true" />}
 
         {showSuggestions && suggestions.length > 0 && (
           <div className="suggestions-dropdown">
@@ -459,7 +529,12 @@ const DeliveryAddressInput = ({
                 <div
                   key={suggestion.id}
                   className={`suggestion-item ${isGeneralAddress ? 'suggestion-item-warning' : ''}`}
-                  onMouseDown={() => handleSelectSuggestion(suggestion)}
+                  onMouseDown={(e) => {
+                    // Giữ focus ở ô input để blur không gửi thêm một lệnh tính phí theo chữ gõ dở
+                    e.preventDefault();
+                    selectingSuggestionRef.current = true;
+                    handleSelectSuggestion(suggestion);
+                  }}
                 >
                   <span className="suggestion-icon">📍</span>
                   <div className="suggestion-text">
@@ -551,8 +626,15 @@ const DeliveryAddressInput = ({
       </div>
       )}
 
+      {isCalculating && (
+        <div className="delivery-info-card delivery-info-calculating" role="status" aria-live="polite">
+          <span className="address-input-spinner delivery-calculating-spinner" aria-hidden="true" />
+          <span>{t('placeOrder.form.calculatingFee')}</span>
+        </div>
+      )}
+
       {/* Delivery info display */}
-      {deliveryInfo && (
+      {!isCalculating && deliveryInfo && (
         <div className="delivery-info-card">
           <div className="delivery-info-header">
             <span className="delivery-icon">🚚</span>
@@ -582,7 +664,7 @@ const DeliveryAddressInput = ({
       )}
 
       {/* Error message */}
-      {error && (
+      {!isCalculating && error && (
         <div className="delivery-error">
           <span className="error-icon">⚠️</span>
           <span>{error}</span>

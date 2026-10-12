@@ -176,15 +176,17 @@ const placeOrder = async (req, res) => {
         let normalizedDeliveryInfo = null;
 
         if (isDelivery) {
+            // Dùng toạ độ khách đã chọn/ghim (normalizedAddress.coordinates) để phí lúc đặt
+            // khớp với phí đang hiển thị; chỉ geocode lại theo chữ khi không có toạ độ
             const deliveryResult = await resolveDelivery({
-                structuredAddress: normalizedAddress,
-                preferStructuredGeocode: true
+                address: normalizedAddress.fullAddress || undefined,
+                structuredAddress: normalizedAddress
             });
 
             if (!deliveryResult.success) {
                 return res.status(400).json({
                     success: false,
-                    code: 'DELIVERY_UNAVAILABLE',
+                    code: deliveryResult.code || 'DELIVERY_UNAVAILABLE',
                     message: deliveryResult.message,
                     messageEn: deliveryResult.messageEn,
                     messageHu: deliveryResult.messageHu,

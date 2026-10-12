@@ -228,6 +228,28 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+.delivery-info-calculating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--brand-surface, #f5f5f5);
+  color: inherit;
+  border: 1px dashed var(--brand-accent, #2e7d32);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.delivery-calculating-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--brand-border, #ccc);
+  border-top-color: var(--brand-accent, #2e7d32);
+  border-radius: 50%;
+  animation: address-input-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
 .delivery-info-header {
   display: flex;
   align-items: center;
