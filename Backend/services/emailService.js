@@ -587,14 +587,14 @@ export const sendOrderConfirmation = async (order) => {
     }
 
     // Fetch global box fee from restaurant settings
-    let globalBoxFee = 0.3; // Default
+    let globalBoxFee = 0;
     try {
       const restaurant = await restaurantLocationModel.findOne({ isActive: true, isPrimary: true });
-      if (restaurant && restaurant.boxFee !== undefined) {
-        globalBoxFee = restaurant.boxFee;
+      if (restaurant && restaurant.boxFee !== undefined && restaurant.boxFee !== null) {
+        globalBoxFee = Number(restaurant.boxFee) || 0;
       }
     } catch (err) {
-      console.warn('⚠️ Could not fetch box fee, using default 0.3:', err.message);
+      console.warn('⚠️ Could not fetch box fee, using 0:', err.message);
     }
     
     // Store box fee in order for email calculation
@@ -673,6 +673,17 @@ export const sendAdminOrderNotification = async (order) => {
     }
     
     const branding = await getRestaurantBranding()
+
+    let globalBoxFee = 0;
+    try {
+      const restaurant = await restaurantLocationModel.findOne({ isActive: true, isPrimary: true });
+      if (restaurant && restaurant.boxFee !== undefined && restaurant.boxFee !== null) {
+        globalBoxFee = Number(restaurant.boxFee) || 0;
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not fetch box fee for admin email:', err.message);
+    }
+    order._globalBoxFee = globalBoxFee;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -1617,7 +1628,7 @@ const getEmailTranslations = (lang, brandName = 'Restaurant') => {
 // Build a human-friendly "house number + street" line for orders.
 // Avoid duplicating if street already contains a leading number or includes the house number.
 // Calculate item price including box fee and options (same logic as frontend)
-const calculateItemPrice = async (item, globalBoxFee = 0.3) => {
+const calculateItemPrice = (item, globalBoxFee = 0) => {
   // Tính giá gốc (chưa bao gồm box fee)
   let basePrice = 0;
   
@@ -1658,6 +1669,12 @@ const calculateItemPrice = async (item, globalBoxFee = 0.3) => {
   const finalPrice = Number(basePrice) + boxFee;
   
   return finalPrice;
+};
+
+const getItemLineTotal = (item, globalBoxFee = 0) => {
+  const unitPrice = calculateItemPrice(item, globalBoxFee);
+  const quantity = Number(item.quantity) || 1;
+  return unitPrice * quantity;
 };
 
 // Generate HTML email content for order confirmation
@@ -1729,7 +1746,7 @@ const generateOrderConfirmationEmailHTML = (order, branding = {}) => {
         .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
         .item-name { font-weight: bold; }
         .item-quantity { color: #666; }
-        .item-price { color: #333; }
+        .item-price { color: #333; font-weight: bold; white-space: nowrap; margin-left: 12px; }
         .total-section { background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; }
         .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; }
         .total-final { font-size: 20px; font-weight: bold; color: #e74c3c; }
@@ -1786,8 +1803,9 @@ const generateOrderConfirmationEmailHTML = (order, branding = {}) => {
                 <div>
                   <span class="item-name">${getLocalizedItemName(item, langCode)}</span>
                   <span class="item-quantity"> x ${item.quantity || 1}</span>
+                  ${formatSelectedOptions(item, langCode) ? `<div class="item-quantity">${formatSelectedOptions(item, langCode)}</div>` : ''}
                 </div>
-                ${formatSelectedOptions(item, langCode) ? `<div class="item-quantity">${formatSelectedOptions(item, langCode)}</div>` : ''}
+                <span class="item-price">${formatCurrency(getItemLineTotal(item, order._globalBoxFee))}</span>
               </div>
             `).join('')}
           </div>
@@ -1923,7 +1941,7 @@ ${t.fulfillmentType}: ${fulfillmentLabel}
 ${t.paymentMethod}: ${t.paymentCOD}
 
 ${t.orderItems.toUpperCase()}:
-${order.items.map(item => `- ${getLocalizedItemName(item, langCode)}${formatSelectedOptions(item, langCode)} x ${item.quantity || 1}`).join('\n')}
+${order.items.map(item => `- ${getLocalizedItemName(item, langCode)}${formatSelectedOptions(item, langCode)} x ${item.quantity || 1}: ${formatCurrency(getItemLineTotal(item, order._globalBoxFee))}`).join('\n')}
 
 ${t.orderDetails.toUpperCase()}:
 ${t.subtotal}: ${formatCurrency(subtotal)}
@@ -2185,10 +2203,11 @@ const generateAdminOrderNotificationEmailHTML = async (order, branding = {}) => 
         .info-label { width: 100px; color: #7f8c8d; font-size: 14px; }
         .info-value { flex: 1; color: #2c3e50; font-weight: 500; font-size: 14px; }
         .items-list { margin: 12px 0; }
-        .item-row { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .item-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
         .item-name { color: #2c3e50; font-weight: 500; }
         .item-qty { color: #7f8c8d; margin-left: 8px; }
-        .item-options { font-size: 12px; color: #7f8c8d; margin-left: 20px; font-style: italic; }
+        .item-price { color: #2c3e50; font-weight: 600; white-space: nowrap; margin-left: 12px; }
+        .item-options { font-size: 12px; color: #7f8c8d; margin-left: 0; font-style: italic; }
         .total-section { background: #f8f9fa; padding: 16px; border-radius: 6px; margin: 16px 0; }
         .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
         .total-row.final { border-top: 2px solid #2c3e50; margin-top: 8px; padding-top: 12px; font-size: 18px; font-weight: 600; color: #e74c3c; }
@@ -2247,10 +2266,13 @@ const generateAdminOrderNotificationEmailHTML = async (order, branding = {}) => 
                 const cleanOptionsText = optionsText ? optionsText.replace(/^ \(/, '').replace(/\)$/, '') : '';
                 return `
                 <div class="item-row">
-                  <div class="item-name">
-                    ${productNameVI}<span class="item-qty"> x${item.quantity || 1}</span>
+                  <div>
+                    <div class="item-name">
+                      ${productNameVI}<span class="item-qty"> x${item.quantity || 1}</span>
+                    </div>
+                    ${cleanOptionsText ? `<div class="item-options">${cleanOptionsText}</div>` : ''}
                   </div>
-                  ${cleanOptionsText ? `<div class="item-options">${cleanOptionsText}</div>` : ''}
+                  <span class="item-price">${formatCurrency(getItemLineTotal(item, order._globalBoxFee))}</span>
                 </div>
               `;
               }))).join('')}
@@ -2392,7 +2414,7 @@ ${(await Promise.all(order.items.map(async (item) => {
     const product = await getProductForEmailItem(item);
     const productNameVI = formatAdminItemName(item, product);
     const optionsText = await formatSelectedOptionsForAdmin(item, product);
-    return `- ${productNameVI}${optionsText ? optionsText : ''} x${item.quantity || 1}`;
+    return `- ${productNameVI}${optionsText ? optionsText : ''} x${item.quantity || 1}: ${formatCurrency(getItemLineTotal(item, order._globalBoxFee))}`;
   }))).join('\n')}
 
 Tạm tính: ${formatCurrency(subtotal)}
