@@ -1,5 +1,5 @@
 .restaurant-info-page {
-  padding: 2rem;
+  padding: 0 2rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -7,8 +7,15 @@
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: var(--header-height);
+  z-index: 30;
+  margin: 0 -2rem 1.5rem;
+  padding: 1.25rem 2rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .page-header h1 {
@@ -280,14 +287,6 @@
   border-bottom: 2px solid #e0e0e0;
 }
 
-/* Form Actions */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
 .btn-save {
   padding: 0.875rem 2rem;
   background: var(--color-primary);
@@ -314,19 +313,24 @@
 /* Responsive */
 @media (max-width: 768px) {
   .restaurant-info-page {
-    padding: 1rem;
+    padding: 0 1rem 1rem;
   }
 
   .page-header {
     flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 1rem;
   }
 
   .header-actions {
     width: 100%;
   }
 
-  .btn-reset {
+  .btn-reset,
+  .btn-save {
     flex: 1;
   }
 

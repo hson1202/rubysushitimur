@@ -383,8 +383,11 @@ const RestaurantInfo = ({ url }) => {
           <p>{t('ri.subtitle')}</p>
         </div>
         <div className="header-actions">
-          <button className="btn-reset" onClick={handleReset} disabled={isSaving}>
+          <button type="button" className="btn-reset" onClick={handleReset} disabled={isSaving}>
             ↺ {t('ri.reset')}
+          </button>
+          <button type="submit" form="restaurant-info-form" className="btn-save" disabled={isSaving}>
+            {isSaving ? `💾 ${t('ri.saving')}` : `💾 ${t('ri.saveChanges')}`}
           </button>
         </div>
       </div>
@@ -407,7 +410,7 @@ const RestaurantInfo = ({ url }) => {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form id="restaurant-info-form" onSubmit={handleSubmit}>
 
         {/* Basic Information Tab */}
         {activeTab === 'basic' && (
@@ -736,11 +739,6 @@ const RestaurantInfo = ({ url }) => {
           </div>
         )}
 
-        <div className="form-actions">
-          <button type="submit" className="btn-save" disabled={isSaving}>
-            {isSaving ? `💾 ${t('ri.saving')}` : `💾 ${t('ri.saveChanges')}`}
-          </button>
-        </div>
       </form>
     </div>
   );
