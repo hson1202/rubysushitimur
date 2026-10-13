@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import './ProductDetail.css'
 import { assets } from '../../assets/assets'
@@ -80,6 +81,8 @@ const ProductDetail = ({ product, onClose }) => {
   const [selectedOptions, setSelectedOptions] = useState({})
   const [currentImage, setCurrentImage] = useState('')
   const [currentPrice, setCurrentPrice] = useState(0)
+  const [imageOpen, setImageOpen] = useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
 
   // Debug: Log product data
   if (product) {
@@ -109,7 +112,18 @@ const ProductDetail = ({ product, onClose }) => {
     // Ảnh ban đầu
     const initialImage = pickImageFromSelections(product, defaultSelections);
     setCurrentImage(initialImage);
+    setImageOpen(false);
+    setImageFailed(false);
   }, [product]);
+
+  useEffect(() => {
+    if (!imageOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setImageOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [imageOpen]);
 
   // Function to get the appropriate name based on current language
   const getLocalizedName = () => {
@@ -176,6 +190,7 @@ const ProductDetail = ({ product, onClose }) => {
     
     const newImage = pickImageFromSelections(product, newSelectedOptions);
     setCurrentImage(newImage);
+    setImageFailed(false);
   }
 
   const isRestaurantClosed = restaurantOpenStatus && !restaurantOpenStatus.isOpen
@@ -247,6 +262,8 @@ const ProductDetail = ({ product, onClose }) => {
 
   const displayName = formatProductDisplayName(product, getLocalizedName())
   const displayDescription = getLocalizedDescription(product, i18n.language)
+  const resolvedImage = resolveImageUrl(currentImage || product.image, url)
+  const canZoomImage = Boolean(resolvedImage) && !imageFailed
 
   const allergenInfos = normalizeAllergens(product.allergens)
     .map((code) => getAllergenInfo(code, i18n.language))
@@ -262,18 +279,28 @@ const ProductDetail = ({ product, onClose }) => {
         {/* PHẦN SCROLL */}
         <div className="product-detail-content">
           <div className="product-detail-image food-image-container">
-            <img 
-              src={(() => {
-                const candidate = currentImage || product.image;
-                const resolved = resolveImageUrl(candidate, url);
-                return resolved || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn42dIE5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
-              })()}
-              alt={displayName}
-              onError={(e) => {
-                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn5qrIEVycm9yPC90ZXh0Pjwvc3ZnPg==';
-                e.target.onerror = null;
+            <button
+              type="button"
+              className="product-detail-image-btn"
+              onClick={() => {
+                if (canZoomImage) setImageOpen(true);
               }}
-            />
+              disabled={!canZoomImage}
+              aria-label={t('productDetail.viewImage', 'View image')}
+            >
+              <img
+                src={resolvedImage || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn42dIE5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='}
+                alt={displayName}
+                onError={(e) => {
+                  setImageFailed(true);
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn5qrIEVycm9yPC90ZXh0Pjwvc3ZnPg==';
+                  e.target.onerror = null;
+                }}
+              />
+              {canZoomImage && (
+                <span className="product-detail-zoom-hint">{t('productDetail.viewImage', 'View image')}</span>
+              )}
+            </button>
             {product.isPromotion && !hasOverrideOpt(product) && (
               <div className="promotion-badge">
                 -{calculateDiscount()}% {t('food.promotion')}
@@ -447,6 +474,34 @@ const ProductDetail = ({ product, onClose }) => {
           </div>
         </div>
       </div>
+
+      {imageOpen && canZoomImage && createPortal(
+        <div
+          className="product-image-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={displayName}
+          onClick={() => setImageOpen(false)}
+        >
+          <button
+            type="button"
+            className="product-image-lightbox-close"
+            onClick={(e) => {
+              e.stopPropagation();
+              setImageOpen(false);
+            }}
+            aria-label={t('productDetail.close')}
+          >
+            <img src={assets.cross_icon} alt="" />
+          </button>
+          <img
+            src={resolvedImage}
+            alt={displayName}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

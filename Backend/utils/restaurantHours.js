@@ -191,19 +191,22 @@ const scheduleKey = (day) => {
   return `${day.openTime}-${day.closeTime}`
 }
 
+// Same order as the admin hours table: Monday → Sunday.
+const WEEK_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
+
 export const formatWeeklyHoursDisplay = (weeklyHours, lang = 'vi') => {
   const normalized = normalizeWeeklyHours(weeklyHours)
   const t = MESSAGES[lang] || MESSAGES.vi
   const groups = []
   let currentGroup = null
 
-  for (let i = 0; i < 7; i++) {
-    const key = scheduleKey(normalized[i])
+  for (const dayIndex of WEEK_DISPLAY_ORDER) {
+    const key = scheduleKey(normalized[dayIndex])
     if (!currentGroup || currentGroup.key !== key) {
       if (currentGroup) groups.push(currentGroup)
-      currentGroup = { key, days: [i] }
+      currentGroup = { key, days: [dayIndex] }
     } else {
-      currentGroup.days.push(i)
+      currentGroup.days.push(dayIndex)
     }
   }
   if (currentGroup) groups.push(currentGroup)
@@ -215,7 +218,7 @@ export const formatWeeklyHoursDisplay = (weeklyHours, lang = 'vi') => {
     }
     const [open, close] = group.key.split('-')
     return `${dayRange}: ${open} – ${close}`
-  }).join(', ')
+  }).join('\n')
 }
 
 export const formatOpeningHoursLegacy = (weeklyHours, lang = 'vi') => {

@@ -31,10 +31,12 @@ const ensureWeeklyHours = async (info) => {
   const needsWeeklySave = !Array.isArray(info.weeklyHours) || info.weeklyHours.length !== 7
   info.weeklyHours = normalized
   const legacy = formatOpeningHoursLegacy(normalized, 'vi')
-  if (!info.openingHours?.weekdays || !info.openingHours?.sunday) {
+  const hoursOutOfDate = info.openingHours?.weekdays !== legacy.weekdays
+    || info.openingHours?.sunday !== legacy.sunday
+  if (hoursOutOfDate) {
     info.openingHours = { weekdays: legacy.weekdays, sunday: legacy.sunday }
   }
-  if (needsWeeklySave) {
+  if (needsWeeklySave || hoursOutOfDate) {
     await info.save()
   }
   return info
@@ -130,9 +132,7 @@ const updateRestaurantInfo = async (req, res) => {
       const normalized = normalizeWeeklyHours(weeklyHours)
       updates.weeklyHours = normalized
       const legacy = formatOpeningHoursLegacy(normalized, 'vi')
-      updates.openingHours = openingHours !== undefined
-        ? openingHours
-        : { weekdays: legacy.weekdays, sunday: legacy.sunday }
+      updates.openingHours = { weekdays: legacy.weekdays, sunday: legacy.sunday }
     } else if (openingHours !== undefined) {
       updates.openingHours = openingHours
     }

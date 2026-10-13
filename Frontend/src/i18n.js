@@ -617,6 +617,7 @@ const resources = {
       'productDetail.sku': 'SKU',
       'productDetail.notAvailable': 'N/A',
       'productDetail.close': 'Đóng',
+      'productDetail.viewImage': 'Xem ảnh',
 
       // Cart Popup
       'cartPopup.optionSeparator': ': ',
@@ -1309,6 +1310,7 @@ const resources = {
       'productDetail.sku': 'SKU',
       'productDetail.notAvailable': 'N/A',
       'productDetail.close': 'Close',
+      'productDetail.viewImage': 'View image',
 
       // Cart Popup
       'cartPopup.optionSeparator': ': ',
@@ -2001,6 +2003,7 @@ const resources = {
       'productDetail.sku': 'SKU',
       'productDetail.notAvailable': 'N/A',
       'productDetail.close': 'Close',
+      'productDetail.viewImage': 'Kép megtekintése',
 
       // Cart Popup
       'cartPopup.optionSeparator': ': ',

@@ -7,7 +7,8 @@ import { StoreContext } from '../../Context/StoreContext';
 import {
   normalizeWeeklyHours,
   generateTimeSlotsForDate,
-  formatOpeningHoursLegacy
+  formatWeeklyHoursDisplay,
+  formatDayHours
 } from '../../utils/restaurantHours';
 
 const Reservation = () => {
@@ -170,9 +171,7 @@ const Reservation = () => {
     if (!selectedDate) return '';
     const weeklyHours = normalizeWeeklyHours(restaurantInfo?.weeklyHours);
     const lang = (i18n.language || 'vi').split('-')[0];
-    const legacy = formatOpeningHoursLegacy(weeklyHours, lang);
-    const isSunday = new Date(selectedDate).getDay() === 0;
-    return isSunday ? legacy.sunday : legacy.weekdays;
+    return formatDayHours(weeklyHours, new Date(`${selectedDate}T12:00:00Z`), lang);
   };
 
   // Update time slots when date changes
@@ -448,15 +447,28 @@ const Reservation = () => {
           <div className="info-card">
             <h3>{t('booking.info.hours')}</h3>
             <div className="hours">
-              {restaurantInfo?.openingHours?.weekdays && (
+              {restaurantInfo?.weeklyHours?.length === 7 ? (
                 <div className="day">
-                  <span>{restaurantInfo.openingHours.weekdays}</span>
+                  <span>
+                    {formatWeeklyHoursDisplay(
+                      normalizeWeeklyHours(restaurantInfo.weeklyHours),
+                      (i18n.language || 'vi').split('-')[0]
+                    )}
+                  </span>
                 </div>
-              )}
-              {restaurantInfo?.openingHours?.sunday && (
-                <div className="day">
-                  <span>{restaurantInfo.openingHours.sunday}</span>
-                </div>
+              ) : (
+                <>
+                  {restaurantInfo?.openingHours?.weekdays && (
+                    <div className="day">
+                      <span>{restaurantInfo.openingHours.weekdays}</span>
+                    </div>
+                  )}
+                  {restaurantInfo?.openingHours?.sunday && (
+                    <div className="day">
+                      <span>{restaurantInfo.openingHours.sunday}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
