@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import '../../i18n'
 import config from '../../config/config'
+import { getActiveRestaurantTimeZone } from '../../utils/timeZone'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -272,16 +273,18 @@ const Dashboard = ({ url }) => {
       const d = new Date(dateString)
       const locale = i18n?.language === 'vi' ? 'vi-VN' : i18n?.language === 'hu' ? 'hu-HU' : 'en-US'
 
+      const timeZone = getActiveRestaurantTimeZone()
+
       if (granularity === 'month') {
-        return new Intl.DateTimeFormat(locale, { month: '2-digit', year: '2-digit' }).format(d)
+        return new Intl.DateTimeFormat(locale, { timeZone, month: '2-digit', year: '2-digit' }).format(d)
       }
 
       if (granularity === 'week') {
-        const weekStart = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d)
+        const weekStart = new Intl.DateTimeFormat(locale, { timeZone, day: '2-digit', month: '2-digit' }).format(d)
         return `${t('dashboard.week')} ${weekStart}`
       }
 
-      return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d)
+      return new Intl.DateTimeFormat(locale, { timeZone, day: '2-digit', month: '2-digit' }).format(d)
     } catch {
       return ''
     }

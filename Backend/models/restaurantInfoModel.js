@@ -156,6 +156,12 @@ const restaurantInfoSchema = new mongoose.Schema(
     deliveryEnabled: {
       type: Boolean,
       default: true
+    },
+
+    // IANA time zone used for opening hours, orders, and emails
+    timeZone: {
+      type: String,
+      default: "Europe/Budapest"
     }
   },
   { timestamps: true }

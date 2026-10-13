@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import config from '../../config/config'
 import { formatProductDisplayName } from '../../utils/productDisplay'
 import { formatFullAddress } from '../../utils/formatAddress'
+import { formatRestaurantDateTime } from '../../utils/timeZone'
 
 
 const TrackOrder = () => {
@@ -74,12 +75,13 @@ const TrackOrder = () => {
 
   const formatDate = (dateString) => {
     const locale = i18n?.language || undefined;
-    return new Date(dateString).toLocaleString(locale, {
+    return formatRestaurantDateTime(dateString, locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hourCycle: 'h23'
     })
   }
 

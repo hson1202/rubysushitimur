@@ -2,16 +2,19 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import foodModel from "../models/foodModel.js";
 import categoryModel from "../models/categoryModel.js";
+import RestaurantInfo from "../models/restaurantInfoModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { getZonedParts, setActiveRestaurantTimeZone, shiftZonedDays, startOfZonedDay, startOfZonedMonth } from "../utils/timeZone.js";
 
 // Get dashboard statistics
 const getDashboardStats = async (req, res) => {
     try {
+        const restaurantInfo = await RestaurantInfo.getSingleton();
+        const timeZone = setActiveRestaurantTimeZone(restaurantInfo.timeZone);
         const now = new Date();
-        const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const currentMonth = startOfZonedMonth(now, timeZone);
+        const lastMonth = startOfZonedMonth(new Date(currentMonth.getTime() - 36 * 60 * 60 * 1000), timeZone);
 
         // Get total counts
         const totalOrders = await orderModel.countDocuments();
@@ -288,12 +291,14 @@ const getTopProducts = async (req, res) => {
 // Get time-based statistics
 const getTimeStats = async (req, res) => {
     try {
+        const restaurantInfo = await RestaurantInfo.getSingleton();
+        const timeZone = setActiveRestaurantTimeZone(restaurantInfo.timeZone);
         const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-        const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+        const today = startOfZonedDay(now, timeZone);
+        const weekAgo = shiftZonedDays(now, -7, timeZone);
+        const monthAgo = shiftZonedDays(now, -30, timeZone);
+        const quarterAgo = shiftZonedDays(now, -90, timeZone);
+        const yearAgo = shiftZonedDays(now, -365, timeZone);
 
         console.log('Time ranges:', { today, weekAgo, monthAgo, quarterAgo, yearAgo });
 
@@ -836,15 +841,17 @@ const getTimeBasedStats = async (req, res) => {
     try {
         const { days = 30, granularity = 'day', metric = 'revenue', orderStatus = 'all' } = req.query;
 
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999); // End of today
-        const startDate = new Date(endDate.getTime() - (parseInt(days) * 24 * 60 * 60 * 1000));
-        startDate.setHours(0, 0, 0, 0); // Start of start date
+        const restaurantInfo = await RestaurantInfo.getSingleton();
+        const timeZone = setActiveRestaurantTimeZone(restaurantInfo.timeZone);
+        const now = new Date();
+        const endDate = shiftZonedDays(now, 1, timeZone);
+        const dayCount = Number.parseInt(days, 10);
+        const startDate = shiftZonedDays(now, -(Number.isFinite(dayCount) ? dayCount : 30), timeZone);
 
         let data = [];
 
         // Generate date range based on granularity
-        const dateRange = generateDateRange(startDate, endDate, granularity);
+        const dateRange = generateDateRange(startDate, endDate, granularity, timeZone);
 
         // Get data for each date in the range
         for (const dateInfo of dateRange) {
@@ -929,46 +936,43 @@ const getTimeBasedStats = async (req, res) => {
 };
 
 // Helper function to generate date range
-const generateDateRange = (startDate, endDate, granularity) => {
+const generateDateRange = (startDate, endDate, granularity, timeZone) => {
     const ranges = [];
-    let currentDate = new Date(startDate);
-    currentDate.setHours(0, 0, 0, 0);
+    let currentDate = startOfZonedDay(startDate, timeZone);
 
-    while (currentDate <= endDate) {
-        let rangeStart = new Date(currentDate);
-        let rangeEnd = new Date(currentDate);
+    while (currentDate < endDate) {
+        let rangeStart = currentDate;
+        let rangeEnd;
 
         switch (granularity) {
-            case 'day':
-                rangeEnd.setDate(rangeEnd.getDate() + 1);
-                currentDate.setDate(currentDate.getDate() + 1);
-                break;
-            case 'week':
-                // Start of week (Monday)
-                const dayOfWeek = rangeStart.getDay();
+            case 'week': {
+                const dayOfWeek = getZonedParts(currentDate, timeZone).dayIndex;
                 const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-                rangeStart.setDate(rangeStart.getDate() + diff);
-                rangeEnd = new Date(rangeStart);
-                rangeEnd.setDate(rangeEnd.getDate() + 7);
-                currentDate = new Date(rangeEnd);
+                rangeStart = shiftZonedDays(currentDate, diff, timeZone);
+                rangeEnd = shiftZonedDays(rangeStart, 7, timeZone);
+                currentDate = rangeEnd;
                 break;
-            case 'month':
-                rangeStart.setDate(1);
-                rangeEnd = new Date(rangeStart.getFullYear(), rangeStart.getMonth() + 1, 1);
-                currentDate = new Date(rangeEnd);
+            }
+            case 'month': {
+                const parts = getZonedParts(currentDate, timeZone);
+                rangeStart = startOfZonedMonth(currentDate, timeZone);
+                const nextYear = parts.month === 12 ? parts.year + 1 : parts.year;
+                const nextMonth = parts.month === 12 ? 1 : parts.month + 1;
+                rangeEnd = startOfZonedMonth(new Date(Date.UTC(nextYear, nextMonth - 1, 15)), timeZone);
+                currentDate = rangeEnd;
                 break;
+            }
+            case 'day':
             default:
-                rangeEnd.setDate(rangeEnd.getDate() + 1);
-                currentDate.setDate(currentDate.getDate() + 1);
+                rangeEnd = shiftZonedDays(currentDate, 1, timeZone);
+                currentDate = rangeEnd;
         }
 
-        // Make sure we don't go beyond the end date
         if (rangeEnd > endDate) {
-            rangeEnd = new Date(endDate);
-            rangeEnd.setHours(23, 59, 59, 999);
+            rangeEnd = endDate;
         }
 
-        if (rangeStart <= endDate) {
+        if (rangeStart < endDate) {
             ranges.push({ start: rangeStart, end: rangeEnd });
         }
     }

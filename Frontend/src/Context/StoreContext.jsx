@@ -3,6 +3,7 @@ import axios from "axios"
 import config from "../config/config"
 import i18n from "../i18n"
 import { getRestaurantStatus, normalizeWeeklyHours, isRestaurantOpen } from "../utils/restaurantHours"
+import { setActiveRestaurantTimeZone } from "../utils/timeZone"
 
 export const CART_ITEMS_KEY = "ruby_cart_items"
 export const CART_DATA_KEY = "ruby_cart_items_data"
@@ -52,6 +53,7 @@ const StoreContextProvider =(props)=>{
             setRestaurantOpenStatus(null);
             return;
         }
+        setActiveRestaurantTimeZone(info.timeZone);
         const weeklyHours = normalizeWeeklyHours(info.weeklyHours);
         const lang = (i18n.language || 'vi').split('-')[0];
         setRestaurantOpenStatus(getRestaurantStatus(weeklyHours, lang));
@@ -211,6 +213,7 @@ const StoreContextProvider =(props)=>{
             if (!silent) setRestaurantInfoLoading(true);
             const response = await axios.get(url + "/api/restaurant-info");
             if (response.data.success) {
+                setActiveRestaurantTimeZone(response.data.data?.timeZone);
                 setRestaurantInfo(response.data.data);
                 updateRestaurantOpenStatus(response.data.data);
             }

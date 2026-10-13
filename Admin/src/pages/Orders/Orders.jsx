@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import config from '../../config/config';
 import { formatFullAddress } from '../../utils/formatAddress';
+import { formatRestaurantDateTime, getActiveRestaurantTimeZone, zonedCalendarDayIndex } from '../../utils/timeZone';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -36,15 +37,15 @@ const getFulfillmentLabel = (type, t) => {
 const formatMoney = (value = 0) => new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(Number(value || 0)));
 const formatDateTime = (value) => {
   if (!value) return '';
-  return new Intl.DateTimeFormat('vi-VN', {
+  return formatRestaurantDateTime(value, 'hu-HU', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
-  }).format(new Date(value));
+    hourCycle: 'h23',
+  });
 };
 const csvCell = (value) => `"${String(value ?? '').replace(/"/g, '""').trim()}"`;
 
@@ -148,10 +149,8 @@ const Orders = () => {
   );
 
   const filteredOrders = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const timeZone = getActiveRestaurantTimeZone();
+    const todayIndex = zonedCalendarDayIndex(new Date(), timeZone);
 
     return orders.filter((order) => {
       const matchSearch =
@@ -167,12 +166,14 @@ const Orders = () => {
       let matchTime = true;
       if (timeFilter !== 'all') {
         const orderDate = new Date(order.createdAt || order.date || 0);
+        const orderDayIndex = zonedCalendarDayIndex(orderDate, timeZone);
+        const dayGap = todayIndex - orderDayIndex;
         if (timeFilter === 'today') {
-          matchTime = orderDate >= today;
+          matchTime = dayGap === 0;
         } else if (timeFilter === 'week') {
-          matchTime = orderDate >= weekAgo;
+          matchTime = dayGap >= 0 && dayGap <= 7;
         } else if (timeFilter === 'month') {
-          matchTime = orderDate >= monthAgo;
+          matchTime = dayGap >= 0 && dayGap <= 30;
         }
       }
 
@@ -633,13 +634,7 @@ const OrderDetailsModal = React.memo(({ order, onClose }) => {
                 <p className="meta-label">{t('orders.orderDate', 'Order Date')}</p>
                 <p className="meta-value">
                   {order.createdAt
-                    ? new Date(order.createdAt).toLocaleString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                    ? formatDateTime(order.createdAt)
                     : 'N/A'}
                 </p>
               </div>

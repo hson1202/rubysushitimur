@@ -6,6 +6,7 @@ import {
   validateWeeklyHours,
   formatOpeningHoursLegacy
 } from "../utils/restaurantHours.js"
+import { isValidTimeZone, DEFAULT_RESTAURANT_TIME_ZONE } from "../utils/timeZone.js"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
 
@@ -96,7 +97,8 @@ const updateRestaurantInfo = async (req, res) => {
       copyrightText,
       translations,
       isActive,
-      deliveryEnabled
+      deliveryEnabled,
+      timeZone
     } = req.body || {}
 
     const updates = {}
@@ -123,6 +125,12 @@ const updateRestaurantInfo = async (req, res) => {
     if (translations !== undefined) updates.translations = translations
     if (isActive !== undefined) updates.isActive = isActive
     if (deliveryEnabled !== undefined) updates.deliveryEnabled = Boolean(deliveryEnabled)
+    if (timeZone !== undefined) {
+      if (!isValidTimeZone(timeZone)) {
+        return res.status(400).json({ success: false, message: "Múi giờ không hợp lệ" })
+      }
+      updates.timeZone = timeZone
+    }
 
     if (weeklyHours !== undefined) {
       const validation = validateWeeklyHours(weeklyHours)
@@ -194,6 +202,7 @@ const resetToDefaults = async (req, res) => {
     info.copyrightText = ""
     info.isActive = true
     info.deliveryEnabled = true
+    info.timeZone = DEFAULT_RESTAURANT_TIME_ZONE
 
     await info.save()
 

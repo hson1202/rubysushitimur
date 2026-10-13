@@ -1,6 +1,17 @@
 /**
  * Utility functions for time-based food availability
  */
+import { formatRestaurantDateTime, getZonedParts } from './timeZone'
+
+const getRestaurantNow = (date = new Date()) => {
+  const parts = getZonedParts(date)
+  return {
+    date: parts,
+    day: parts.dayIndex,
+    minutes: parts.hour * 60 + parts.minute,
+    time: `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`
+  }
+}
 
 /**
  * Check if a food item is currently available based on time settings
@@ -10,6 +21,7 @@
 export const isFoodAvailable = (food) => {
   if (!food) return false;
 
+  const nowClock = getRestaurantNow();
   const now = new Date();
 
   // Check date-based availability (availableFrom & availableTo)
@@ -35,9 +47,7 @@ export const isFoodAvailable = (food) => {
       return false; // Not available - no days configured
     }
     
-    const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-    
-    if (!days.includes(currentDay)) {
+    if (!days.includes(nowClock.day)) {
       return false; // Not available on this day of week
     }
   }
@@ -47,7 +57,7 @@ export const isFoodAvailable = (food) => {
     const { timeFrom, timeTo } = food.dailyAvailability;
     
     if (timeFrom && timeTo) {
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const currentTime = nowClock.time;
       
       if (currentTime < timeFrom || currentTime > timeTo) {
         return false; // Outside daily time window
@@ -123,6 +133,7 @@ export const getAvailabilityStatus = (food, language = 'vi') => {
   };
 
   const t = messages[language] || messages.vi;
+  const nowClock = getRestaurantNow();
   const now = new Date();
 
   // Check date-based availability
@@ -160,9 +171,7 @@ export const getAvailabilityStatus = (food, language = 'vi') => {
       };
     }
     
-    const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-    
-    if (!days.includes(currentDay)) {
+    if (!days.includes(nowClock.day)) {
       // Not available today - show which days it's available
       const dayNames = days.map(d => t.days[d]).join(', ');
       return {
@@ -178,7 +187,7 @@ export const getAvailabilityStatus = (food, language = 'vi') => {
     const { timeFrom, timeTo } = food.dailyAvailability;
     
     if (timeFrom && timeTo) {
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const currentTime = nowClock.time;
       
       const isAvailableNow = currentTime >= timeFrom && currentTime <= timeTo;
       
@@ -214,7 +223,8 @@ const formatDateTime = (date, language = 'vi') => {
     minute: '2-digit'
   };
 
-  return new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : language === 'hu' ? 'hu-HU' : 'en-US', options).format(date);
+  const locale = language === 'vi' ? 'vi-VN' : language === 'hu' ? 'hu-HU' : 'en-US';
+  return formatRestaurantDateTime(date, locale, options);
 };
 
 /**
@@ -233,7 +243,7 @@ export const formatTime = (timeString) => {
  * @returns {Object} - {minutes: Number, isStarting: Boolean}
  */
 export const getTimeRemaining = (food) => {
-  const now = new Date();
+  const nowClock = getRestaurantNow();
 
   // Check daily availability
   if (food.dailyAvailability?.enabled) {
@@ -241,27 +251,19 @@ export const getTimeRemaining = (food) => {
     
     if (timeFrom) {
       const [hours, minutes] = timeFrom.split(':').map(Number);
-      const targetTime = new Date();
-      targetTime.setHours(hours, minutes, 0, 0);
+      const targetMinutes = hours * 60 + minutes;
 
-      if (now < targetTime) {
-        // Starting soon
-        const diffMs = targetTime - now;
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        return { minutes: diffMinutes, isStarting: true };
+      if (nowClock.minutes < targetMinutes) {
+        return { minutes: targetMinutes - nowClock.minutes, isStarting: true };
       }
     }
 
     if (timeTo) {
       const [hours, minutes] = timeTo.split(':').map(Number);
-      const targetTime = new Date();
-      targetTime.setHours(hours, minutes, 0, 0);
+      const targetMinutes = hours * 60 + minutes;
 
-      if (now < targetTime) {
-        // Ending soon
-        const diffMs = targetTime - now;
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        return { minutes: diffMinutes, isStarting: false };
+      if (nowClock.minutes < targetMinutes) {
+        return { minutes: targetMinutes - nowClock.minutes, isStarting: false };
       }
     }
   }

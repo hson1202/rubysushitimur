@@ -10,6 +10,7 @@ import {
   formatWeeklyHoursDisplay,
   formatDayHours
 } from '../../utils/restaurantHours';
+import { calendarDateKey } from '../../utils/timeZone';
 
 const Reservation = () => {
   const { t, i18n } = useTranslation();
@@ -161,10 +162,7 @@ const Reservation = () => {
   };
 
   // Get minimum date (today)
-  const getMinDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
+  const getMinDate = () => calendarDateKey(new Date());
 
   // Get business hours text for selected date
   const getBusinessHoursText = (selectedDate) => {

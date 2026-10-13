@@ -4,6 +4,7 @@ import foodModel from '../models/foodModel.js'
 import restaurantLocationModel from '../models/restaurantLocationModel.js'
 import RestaurantInfo from '../models/restaurantInfoModel.js'
 import { formatOrderStreetLine } from '../utils/addressFormat.js'
+import { getActiveRestaurantTimeZone, setActiveRestaurantTimeZone } from '../utils/timeZone.js'
 
 /**
  * Fetches current restaurant branding from DB.
@@ -12,12 +13,14 @@ import { formatOrderStreetLine } from '../utils/addressFormat.js'
 const getRestaurantBranding = async () => {
   try {
     const info = await RestaurantInfo.getSingleton()
+    const timeZone = setActiveRestaurantTimeZone(info.timeZone)
     return {
       name: info.restaurantName || 'Restaurant',
       address: info.address || '',
       email: info.email || '',
       phone: info.phone || '',
-      copyrightText: info.copyrightText || `© ${new Date().getFullYear()} Restaurant. All rights reserved.`
+      copyrightText: info.copyrightText || `© ${new Date().getFullYear()} Restaurant. All rights reserved.`,
+      timeZone
     }
   } catch {
     return {
@@ -30,14 +33,12 @@ const getRestaurantBranding = async () => {
   }
 }
 
-const RESTAURANT_TIME_ZONE = 'Europe/Budapest'
-
 // Giờ trong email phải theo giờ nhà hàng, không theo timezone máy chủ (Render là UTC).
 const formatEmailDateTime = (date, locale = 'vi-VN') => {
   const value = new Date(date)
   if (Number.isNaN(value.getTime())) return ''
   return value.toLocaleString(locale, {
-    timeZone: RESTAURANT_TIME_ZONE,
+    timeZone: getActiveRestaurantTimeZone(),
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -51,7 +52,7 @@ const formatEmailLongDateTime = (date, locale = 'en-US') => {
   const value = new Date(date)
   if (Number.isNaN(value.getTime())) return ''
   return value.toLocaleString(locale, {
-    timeZone: RESTAURANT_TIME_ZONE,
+    timeZone: getActiveRestaurantTimeZone(),
     weekday: 'long',
     year: 'numeric',
     month: 'long',

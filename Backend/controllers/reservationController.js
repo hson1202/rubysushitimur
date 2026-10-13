@@ -8,6 +8,7 @@ import {
   getHoursForDate,
   formatOpeningHoursLegacy
 } from "../utils/restaurantHours.js"
+import { calendarDateKey, setActiveRestaurantTimeZone } from "../utils/timeZone.js"
 
 // Helper function to validate email
 const isValidEmail = (email) => {
@@ -23,17 +24,17 @@ const isValidPhone = (phone) => {
 }
 
 // Helper function to check if date is in the past
-const isDateInPast = (date) => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const reservationDate = new Date(date)
-  reservationDate.setHours(0, 0, 0, 0)
-  return reservationDate < today
+const isDateInPast = async (date) => {
+  const info = await RestaurantInfo.getSingleton()
+  setActiveRestaurantTimeZone(info.timeZone)
+  const selected = String(date).slice(0, 10)
+  return selected < calendarDateKey(new Date(), info.timeZone)
 }
 
 // Helper function to check business hours using restaurant weekly schedule
 const isWithinBusinessHours = async (date, time) => {
   const info = await RestaurantInfo.getSingleton()
+  setActiveRestaurantTimeZone(info.timeZone)
   const weeklyHours = normalizeWeeklyHours(info.weeklyHours)
   return isTimeWithinBusinessHours(weeklyHours, date, time)
 }
@@ -41,6 +42,7 @@ const isWithinBusinessHours = async (date, time) => {
 // Helper function to generate available time slots based on weekly schedule
 const generateAvailableTimeSlots = async (date) => {
   const info = await RestaurantInfo.getSingleton()
+  setActiveRestaurantTimeZone(info.timeZone)
   const weeklyHours = normalizeWeeklyHours(info.weeklyHours)
   return generateTimeSlotsForDate(weeklyHours, date)
 }
@@ -87,7 +89,7 @@ export const createReservation = async (req, res) => {
         }
 
         // Validate date (must not be in the past)
-        if (isDateInPast(reservationDate)) {
+        if (await isDateInPast(reservationDate)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "Reservation date cannot be in the past. Please select today or a future date." 
@@ -98,7 +100,7 @@ export const createReservation = async (req, res) => {
         if (!(await isWithinBusinessHours(reservationDate, reservationTime))) {
             const info = await RestaurantInfo.getSingleton()
             const weeklyHours = normalizeWeeklyHours(info.weeklyHours)
-            const hours = getHoursForDate(weeklyHours, new Date(reservationDate))
+            const hours = getHoursForDate(weeklyHours, reservationDate)
             if (hours.isClosed) {
                 return res.status(400).json({
                     success: false,
@@ -425,7 +427,7 @@ export const getAvailableTimeSlots = async (req, res) => {
         }
 
         // Check if date is in the past
-        if (isDateInPast(date)) {
+        if (await isDateInPast(date)) {
             return res.status(400).json({
                 success: false,
                 message: "Cannot get time slots for past dates"
@@ -435,7 +437,7 @@ export const getAvailableTimeSlots = async (req, res) => {
         const info = await RestaurantInfo.getSingleton()
         const weeklyHours = normalizeWeeklyHours(info.weeklyHours)
         const availableSlots = await generateAvailableTimeSlots(date)
-        const hours = getHoursForDate(weeklyHours, new Date(date))
+        const hours = getHoursForDate(weeklyHours, date)
         const legacy = formatOpeningHoursLegacy(weeklyHours, 'en')
         const businessHours = new Date(date).getDay() === 0
             ? legacy.sunday

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './RestaurantInfo.css';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { DEFAULT_RESTAURANT_TIME_ZONE, formatRestaurantDateTime, formatTimeZoneOption, listTimeZones } from '../../utils/timeZone';
 
 const emptyTranslation = () => ({
   restaurantName: '',
@@ -62,12 +63,20 @@ const RestaurantInfo = ({ url }) => {
     googleMapsUrl: '',
     copyrightText: '',
     deliveryEnabled: true,
+    timeZone: DEFAULT_RESTAURANT_TIME_ZONE,
     translations: {
       vi: emptyTranslation(),
       en: emptyTranslation(),
       hu: emptyTranslation()
     }
   });
+  const timeZoneOptions = useMemo(() => {
+    const zones = listTimeZones();
+    if (formData.timeZone && !zones.includes(formData.timeZone)) {
+      return [formData.timeZone, ...zones];
+    }
+    return zones;
+  }, [formData.timeZone]);
   const [newNotificationEmail, setNewNotificationEmail] = useState('');
   const [isTogglingDelivery, setIsTogglingDelivery] = useState(false);
 
@@ -111,6 +120,7 @@ const RestaurantInfo = ({ url }) => {
           googleMapsUrl: d.googleMapsUrl || '',
           copyrightText: d.copyrightText || '',
           deliveryEnabled: d.deliveryEnabled !== false,
+          timeZone: d.timeZone || DEFAULT_RESTAURANT_TIME_ZONE,
           translations: {
             vi: {
               restaurantName: d.translations?.vi?.restaurantName || '',
@@ -557,6 +567,29 @@ const RestaurantInfo = ({ url }) => {
           <div className="form-section">
             <h2>{t('ri.openingHours')}</h2>
             <p className="hours-help">{t('ri.hoursHelp')}</p>
+            <div className="form-group">
+              <label>{t('ri.timeZone')}</label>
+              <small className="field-hint">{t('ri.timeZoneHelp')}</small>
+              <select name="timeZone" value={formData.timeZone} onChange={handleInputChange}>
+                {timeZoneOptions.map((zone) => (
+                  <option key={zone} value={zone}>{formatTimeZoneOption(zone)}</option>
+                ))}
+              </select>
+              <small className="timezone-now">
+                {t('ri.timeZoneNow', {
+                  time: formatRestaurantDateTime(new Date(), undefined, {
+                    timeZone: formData.timeZone || DEFAULT_RESTAURANT_TIME_ZONE,
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hourCycle: 'h23'
+                  })
+                })}
+              </small>
+            </div>
             <div className={`delivery-status-card ${formData.deliveryEnabled ? 'is-on' : 'is-off'}`}>
               <div className="delivery-status-content">
                 <div>

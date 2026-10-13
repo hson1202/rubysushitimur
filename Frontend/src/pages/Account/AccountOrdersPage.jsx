@@ -6,6 +6,7 @@ import { assets } from '../../assets/assets';
 import { useTranslation } from 'react-i18next';
 import { formatProductDisplayName } from '../../utils/productDisplay';
 import { formatFullAddress } from '../../utils/formatAddress';
+import { formatRestaurantDateTime } from '../../utils/timeZone';
 import '../MyOrders/MyOrders.css';
 
 const AccountOrdersPage = () => {
@@ -146,7 +147,14 @@ const AccountOrdersPage = () => {
                                         </p>
                                         <div className="order-meta-row">
                                             <p className="order-date">
-                                                {new Date(order.createdAt || order.date).toLocaleDateString()}
+                                                {formatRestaurantDateTime(order.createdAt || order.date, i18n.language, {
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hourCycle: 'h23'
+                                                })}
                                             </p>
                                             {order.trackingCode && (
                                                 <p className="order-tracking">

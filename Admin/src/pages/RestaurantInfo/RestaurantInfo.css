@@ -130,7 +130,8 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid #e0e0e0;
@@ -141,7 +142,8 @@
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #FF6B6B;
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
@@ -437,6 +439,13 @@
   color: #666;
   font-size: 0.9rem;
   margin-bottom: 1.25rem;
+}
+
+.timezone-now {
+  display: block;
+  margin-top: 0.4rem;
+  color: #374151;
+  font-weight: 600;
 }
 
 .delivery-status-card {

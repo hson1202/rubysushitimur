@@ -1,3 +1,5 @@
+import { getActiveRestaurantTimeZone, getZonedParts } from './timeZone.js'
+
 const DAY_LABELS = {
   vi: ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'],
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -28,33 +30,12 @@ const MESSAGES = {
   }
 }
 
-const RESTAURANT_TIME_ZONE = 'Europe/Budapest'
-const WEEKDAY_INDEX = {
-  Sun: 0,
-  Mon: 1,
-  Tue: 2,
-  Wed: 3,
-  Thu: 4,
-  Fri: 5,
-  Sat: 6
-}
-
-const getRestaurantDateParts = (date = new Date()) => {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: RESTAURANT_TIME_ZONE,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).formatToParts(date)
-
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
-  const hour = Number(values.hour) === 24 ? 0 : Number(values.hour)
-
+const getRestaurantDateParts = (date = new Date(), timeZone) => {
+  const parts = getZonedParts(date, timeZone || getActiveRestaurantTimeZone())
   return {
-    dayIndex: WEEKDAY_INDEX[values.weekday] ?? date.getDay(),
-    hour,
-    minute: Number(values.minute) || 0
+    dayIndex: parts.dayIndex,
+    hour: parts.hour,
+    minute: parts.minute
   }
 }
 
@@ -103,9 +84,16 @@ const buildHalfHourSlots = (openTime, closeTime) => {
   return slots
 }
 
+const toScheduleDate = (date) => {
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+    return new Date(`${date.slice(0, 10)}T12:00:00Z`)
+  }
+  return date instanceof Date ? date : new Date(date)
+}
+
 const getDaySchedule = (weeklyHours, date) => {
   const normalized = normalizeWeeklyHours(weeklyHours)
-  const { dayIndex } = getRestaurantDateParts(date)
+  const { dayIndex } = getRestaurantDateParts(toScheduleDate(date))
   return normalized[dayIndex]
 }
 
@@ -286,7 +274,7 @@ export const validateWeeklyHours = (weeklyHours) => {
 }
 
 export const getHoursForDate = (weeklyHours, date) => {
-  const schedule = getDaySchedule(weeklyHours, date)
+  const schedule = getDaySchedule(weeklyHours, toScheduleDate(date))
   if (!schedule || schedule.isClosed) {
     return { isClosed: true, start: null, end: null }
   }
@@ -297,7 +285,7 @@ export const getHoursForDate = (weeklyHours, date) => {
 }
 
 export const isTimeWithinBusinessHours = (weeklyHours, date, time) => {
-  const schedule = getDaySchedule(weeklyHours, new Date(date))
+  const schedule = getDaySchedule(weeklyHours, toScheduleDate(date))
   if (!schedule || schedule.isClosed) return false
 
   const timeHour = parseInt(time.split(':')[0], 10)
@@ -311,7 +299,7 @@ export const isTimeWithinBusinessHours = (weeklyHours, date, time) => {
 }
 
 export const generateTimeSlotsForDate = (weeklyHours, date) => {
-  const hours = getHoursForDate(weeklyHours, new Date(date))
+  const hours = getHoursForDate(weeklyHours, toScheduleDate(date))
   if (hours.isClosed || !hours.openTime || !hours.closeTime) return []
   return buildHalfHourSlots(hours.openTime, hours.closeTime)
 }

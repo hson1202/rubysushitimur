@@ -5,6 +5,7 @@ import { sendOrderConfirmation, sendAdminOrderNotification } from "../services/e
 import eventBus from "../services/eventBus.js"
 import { calculateOrderTotal, getSystemFeeFromDB, validatePrice } from "../utils/priceCalculator.js"
 import { isRestaurantOpen, getRestaurantStatus, normalizeWeeklyHours } from "../utils/restaurantHours.js"
+import { setActiveRestaurantTimeZone } from "../utils/timeZone.js"
 import { resolveDelivery } from "../utils/deliveryCalculator.js"
 
 // Mã bưu điện Hungary luôn gồm đúng 4 chữ số (ví dụ: 1061)
@@ -25,6 +26,7 @@ const placeOrder = async (req, res) => {
         console.log('📦 Placing order with userId:', userId, 'orderType:', orderType, 'fulfillmentType:', normalizedFulfillmentType);
 
         const restaurantInfo = await RestaurantInfo.getSingleton()
+        setActiveRestaurantTimeZone(restaurantInfo.timeZone)
         const weeklyHours = normalizeWeeklyHours(restaurantInfo.weeklyHours)
         if (!isRestaurantOpen(weeklyHours)) {
             const status = getRestaurantStatus(weeklyHours, 'vi')
