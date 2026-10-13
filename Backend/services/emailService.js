@@ -30,6 +30,51 @@ const getRestaurantBranding = async () => {
   }
 }
 
+const RESTAURANT_TIME_ZONE = 'Europe/Budapest'
+
+// Giờ trong email phải theo giờ nhà hàng, không theo timezone máy chủ (Render là UTC).
+const formatEmailDateTime = (date, locale = 'vi-VN') => {
+  const value = new Date(date)
+  if (Number.isNaN(value.getTime())) return ''
+  return value.toLocaleString(locale, {
+    timeZone: RESTAURANT_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  })
+}
+
+const formatEmailLongDateTime = (date, locale = 'en-US') => {
+  const value = new Date(date)
+  if (Number.isNaN(value.getTime())) return ''
+  return value.toLocaleString(locale, {
+    timeZone: RESTAURANT_TIME_ZONE,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  })
+}
+
+// Ngày đặt bàn lưu dạng YYYY-MM-DD (00:00 UTC). Giữ đúng ngày lịch khách chọn.
+const formatEmailCalendarDate = (date, locale = 'en-US') => {
+  const value = new Date(date)
+  if (Number.isNaN(value.getTime())) return ''
+  return value.toLocaleDateString(locale, {
+    timeZone: 'UTC',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
 const getSupportEmail = () => process.env.SUPPORT_EMAIL || process.env.ADMIN_EMAIL || ''
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
@@ -280,7 +325,7 @@ export const sendTestEmail = async (toEmail) => {
             
             <p style="color: #666; font-size: 14px; margin-top: 30px;">
               <em>This is an automated test email from ${brandName} Backend.<br>
-              Timestamp: ${new Date().toLocaleString()}</em>
+              Timestamp: ${formatEmailDateTime(new Date(), 'en-US')}</em>
             </p>
           </div>
         </body>
@@ -307,7 +352,7 @@ What this means:
 
 ---
 This is an automated test email from ${brandName} Backend.
-Timestamp: ${new Date().toLocaleString()}
+Timestamp: ${formatEmailDateTime(new Date(), 'en-US')}
       `
     }
     
@@ -661,9 +706,7 @@ const generateAdminReservationNotificationHTML = (reservation, branding = {}) =>
   const phone = branding.phone || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
 
-  const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  })
+  const formatDate = (date) => formatEmailCalendarDate(date)
 
   return `
     <!DOCTYPE html>
@@ -765,9 +808,7 @@ const generateAdminReservationNotificationHTML = (reservation, branding = {}) =>
 const generateAdminReservationNotificationText = (reservation, branding = {}) => {
   const name = branding.name || 'Restaurant'
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
-  const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  })
+  const formatDate = (date) => formatEmailCalendarDate(date)
 
   return `
 [${name}] NEW RESERVATION ALERT
@@ -800,12 +841,7 @@ const generateConfirmationEmailHTML = (reservation, branding = {}) => {
   const email = branding.email || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    return formatEmailCalendarDate(date)
   }
   
   const formatTime = (time) => {
@@ -903,12 +939,7 @@ const generateConfirmationEmailText = (reservation, branding = {}) => {
   const email = branding.email || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    return formatEmailCalendarDate(date)
   }
   
   return `
@@ -953,12 +984,7 @@ const generateStatusUpdateEmailHTML = (reservation, oldStatus, newStatus, brandi
   const email = branding.email || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    return formatEmailCalendarDate(date)
   }
   
   const getStatusText = (status) => {
@@ -1059,12 +1085,7 @@ const generateStatusUpdateEmailText = (reservation, oldStatus, newStatus, brandi
   const email = branding.email || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    return formatEmailCalendarDate(date)
   }
   
   const getStatusText = (status) => {
@@ -1122,14 +1143,7 @@ const generateContactConfirmationEmailHTML = (contactMessage, adminResponse = nu
   const name = branding.name || 'Restaurant'
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailLongDateTime(date)
   }
   
   const getSubjectText = (subject) => {
@@ -1232,14 +1246,7 @@ const generateContactConfirmationEmailText = (contactMessage, adminResponse = nu
   const email = branding.email || ''
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailLongDateTime(date)
   }
   
   const getSubjectText = (subject) => {
@@ -1296,14 +1303,7 @@ const generateAdminNotificationEmailHTML = (contactMessage, branding = {}) => {
   const name = branding.name || 'Restaurant'
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailLongDateTime(date)
   }
   
   const getSubjectText = (subject) => {
@@ -1431,14 +1431,7 @@ const generateAdminNotificationEmailText = (contactMessage, branding = {}) => {
   const name = branding.name || 'Restaurant'
   const copyrightText = branding.copyrightText || `© ${new Date().getFullYear()} ${name}. All rights reserved.`
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailLongDateTime(date)
   }
   
   const getSubjectText = (subject) => {
@@ -1502,6 +1495,8 @@ const getEmailTranslations = (lang, brandName = 'Restaurant') => {
       trackingCode: 'Mã theo dõi đơn hàng',
       orderDetails: 'Thông tin đơn hàng',
       orderDate: 'Ngày đặt',
+      preferredDeliveryTime: 'Thời gian giao hàng mong muốn',
+      preferredPickupTime: 'Thời gian nhận',
       orderType: 'Loại đơn',
       orderTypeRegistered: 'Thành viên',
       orderTypeGuest: 'Khách vãng lai',
@@ -1540,6 +1535,8 @@ const getEmailTranslations = (lang, brandName = 'Restaurant') => {
       trackingCode: 'Your Order Tracking Code',
       orderDetails: 'Order Information',
       orderDate: 'Order Date',
+      preferredDeliveryTime: 'Preferred delivery time',
+      preferredPickupTime: 'Pickup time',
       orderType: 'Order Type',
       orderTypeRegistered: 'Member',
       orderTypeGuest: 'Guest',
@@ -1578,6 +1575,8 @@ const getEmailTranslations = (lang, brandName = 'Restaurant') => {
       trackingCode: 'Követési kódja',
       orderDetails: 'Rendelés adatai',
       orderDate: 'Rendelés dátuma',
+      preferredDeliveryTime: 'Kívánt szállítási idő',
+      preferredPickupTime: 'Átvételi idő',
       orderType: 'Rendelés típusa',
       orderTypeRegistered: 'Tag',
       orderTypeGuest: 'Vendég',
@@ -1673,13 +1672,7 @@ const generateOrderConfirmationEmailHTML = (order, branding = {}) => {
   const formatDate = (date) => {
     const localeMap = { vi: 'vi-VN', en: 'en-US', hu: 'hu-HU' };
     const locale = localeMap[lang?.split('-')[0]] || 'vi-VN';
-    return new Date(date).toLocaleDateString(locale, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailDateTime(date, locale)
   }
   
   const formatCurrency = (amount) => {
@@ -1766,6 +1759,12 @@ const generateOrderConfirmationEmailHTML = (order, branding = {}) => {
               <span class="label">${t.orderDate}:</span>
               <span class="value">${formatDate(order.createdAt || order.date)}</span>
             </div>
+            ${preferredTime ? `
+            <div class="detail-row">
+              <span class="label">${order.fulfillmentType === 'delivery' ? t.preferredDeliveryTime : t.preferredPickupTime}:</span>
+              <span class="value">${preferredTime}</span>
+            </div>
+            ` : ''}
             <div class="detail-row">
               <span class="label">${t.orderType}:</span>
               <span class="value">${order.orderType === 'registered' ? t.orderTypeRegistered : t.orderTypeGuest}</span>
@@ -1874,13 +1873,7 @@ const generateOrderConfirmationEmailText = (order, branding = {}) => {
   const formatDate = (date) => {
     const localeMap = { vi: 'vi-VN', en: 'en-US', hu: 'hu-HU' };
     const locale = localeMap[lang?.split('-')[0]] || 'vi-VN';
-    return new Date(date).toLocaleDateString(locale, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailDateTime(date, locale)
   }
   
   const formatCurrency = (amount) => {
@@ -1910,6 +1903,8 @@ const generateOrderConfirmationEmailText = (order, branding = {}) => {
   const addressState = order.address?.state || '';
   const addressZip = order.address?.zipcode || '';
   const addressCountry = order.address?.country || '';
+  const preferredTime = (order.preferredDeliveryTime || '').toString().trim();
+  const preferredTimeLabel = order.fulfillmentType === 'delivery' ? t.preferredDeliveryTime : t.preferredPickupTime;
   
   return `
 ${brandName} - ${t.title}
@@ -1922,7 +1917,7 @@ ${t.trackingCode.toUpperCase()}: ${order.trackingCode}
 
 ${t.orderDetails.toUpperCase()}:
 ${t.orderDate}: ${formatDate(order.createdAt || order.date)}
-${t.orderType}: ${order.orderType === 'registered' ? t.orderTypeRegistered : t.orderTypeGuest}
+${preferredTime ? `${preferredTimeLabel}: ${preferredTime}\n` : ''}${t.orderType}: ${order.orderType === 'registered' ? t.orderTypeRegistered : t.orderTypeGuest}
 ${t.fulfillmentType}: ${fulfillmentLabel}
 ${t.paymentMethod}: ${t.paymentCOD}
 
@@ -2133,13 +2128,7 @@ function formatSelectedOptions(item, langCode = 'vi') {
 const generateAdminOrderNotificationEmailHTML = async (order, branding = {}) => {
   const brandName = branding.name || 'Restaurant'
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailDateTime(date, 'vi-VN')
   }
   
   const formatCurrency = (amount) => {
@@ -2345,13 +2334,7 @@ const generateAdminOrderNotificationEmailHTML = async (order, branding = {}) => 
 const generateAdminOrderNotificationEmailText = async (order, branding = {}) => {
   const brandName = branding.name || 'Restaurant'
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return formatEmailDateTime(date, 'vi-VN')
   }
   
   const formatCurrency = (amount) => {
