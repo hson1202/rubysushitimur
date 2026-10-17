@@ -117,6 +117,7 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .category-chip.active .category-chip-label {
@@ -171,7 +172,7 @@
     width: 100%;
     flex: 0 0 auto;
     min-height: 64px;
-    height: 64px;
+    height: auto;
     padding: 13px 8px 13px 11px;
     border: none;
     border-left: none;
@@ -257,7 +258,7 @@
 @media (max-width: 390px) {
   .category-chip {
     min-height: 60px;
-    height: 60px;
+    height: auto;
     padding: 12px 6px 12px 9px;
   }
 
@@ -270,7 +271,7 @@
 @media (max-width: 320px) {
   .category-chip {
     min-height: 56px;
-    height: 56px;
+    height: auto;
     padding: 10px 4px 10px 8px;
   }
 
