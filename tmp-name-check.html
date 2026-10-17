@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Name visibility check</title>
+  <link rel="stylesheet" href="/Frontend/src/index.css" />
+  <link rel="stylesheet" href="/Frontend/src/pages/Menu/Menu.css" />
+  <link rel="stylesheet" href="/Frontend/src/components/FoodItem/FoodItem.css" />
+  <link rel="stylesheet" href="/Frontend/src/components/ProductDetail/ProductDetail.css" />
+  <link rel="stylesheet" href="/Frontend/src/components/CategoryFilter/CategoryFilter.css" />
+  <style>
+    body { margin: 0; background: #f7f3ea; }
+    .probe { padding: 16px; }
+    .probe h1 { font-size: 14px; margin: 0 0 12px; }
+  </style>
+</head>
+<body class="pattern-route">
+  <div class="probe">
+    <h1>Layout probe</h1>
+    <div class="menu-page">
+      <div class="menu-shell">
+        <aside class="menu-sidebar">
+          <div class="category-filter">
+            <div class="category-carousel-shell">
+              <div class="category-carousel-container">
+                <button class="category-chip active" type="button">
+                  <span class="category-chip-label">NIGIRISPECIALPLATTER</span>
+                </button>
+                <button class="category-chip" type="button">
+                  <span class="category-chip-label">Hot appetizers and grilled rolls</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <div class="menu-content">
+          <div class="menu-category-item">
+            <div class="food-item compact in-view">
+              <div class="food-row">
+                <div class="thumb food-image-container">
+                  <img alt="" width="2400" height="1600" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2400' height='1600'%3E%3Crect width='2400' height='1600' fill='%23d8cdbb'/%3E%3C/svg%3E" />
+                </div>
+                <div class="title-section">
+                  <div class="title" id="card-title">101. California Roll with Avocado Crab Stick and Extra Long Product Name</div>
+                  <div class="title-portion">8 pieces / 240g</div>
+                  <div class="title-description">Rice, nori, avocado, crab stick, sesame, tobiko, and a long description that should stay clamped without disappearing.</div>
+                  <div class="price-now">3 490 Ft</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-detail-overlay" id="overlay">
+    <div class="product-detail-modal">
+      <button class="close-btn" type="button" id="close-btn">X</button>
+      <div class="product-detail-content">
+        <div class="product-detail-image food-image-container">
+          <button class="product-detail-image-btn" type="button">
+            <img alt="" width="2400" height="1600" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2400' height='1600'%3E%3Crect width='2400' height='1600' fill='%23c9b79d'/%3E%3C/svg%3E" />
+          </button>
+        </div>
+        <div class="product-detail-info">
+          <div class="product-header">
+            <h2 id="detail-name">101. California Roll with Avocado Crab Stick and Extra Long Product Name</h2>
+          </div>
+          <div class="product-description"><p>Fresh roll description that should remain readable beside a very wide photo.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

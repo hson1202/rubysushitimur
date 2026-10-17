@@ -561,25 +561,22 @@
    Sửa: hình không tràn, layout 1 cột, footer gọn
    ========================================= */
 @media (max-width: 768px) {
-  /* Overlay: padding nhỏ hơn, căn giữa */
+  /* Overlay: căn giữa màn hình cả desktop lẫn mobile */
   .product-detail-overlay {
-    padding: 0;
-    align-items: flex-end;
+    padding: 16px;
+    align-items: center;
     justify-content: center;
   }
 
-  /* Modal: chiếm phần lớn màn hình, slide lên từ dưới */
+  /* Modal: chiếm phần lớn màn hình, xuất hiện giữa */
   .product-detail-modal {
     width: 100%;
     max-width: 100%;
-    /* Dùng 92dvh để không bị che bởi status bar và bớt khoảng trống */
-    max-height: 92dvh;
-    border-radius: 20px 20px 0 0;
-    margin: 0;
+    max-height: 90dvh;
+    border-radius: 16px;
+    margin: auto;
     flex-shrink: 0;
-    /* Override animation để slide lên từ dưới thay vì scale */
-    animation: sheetSlideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    /* QUAN TRỌNG: đảm bảo nội dung con không tràn ra ngoài border-radius */
+    animation: modalSlideIn 0.3s ease-out;
     overflow: hidden;
   }
 
@@ -608,7 +605,7 @@
     min-height: 0;
     align-self: auto;
     /* Bo góc phía trên theo modal */
-    border-radius: 20px 20px 0 0;
+    border-radius: 16px 16px 0 0;
     overflow: hidden;
     /* Không dùng sticky trên mobile — gây tràn */
     flex-shrink: 0;
@@ -778,8 +775,8 @@
    ========================================= */
 @media (max-width: 480px) {
   .product-detail-modal {
-    max-height: 95dvh;
-    border-radius: 16px 16px 0 0;
+    max-height: 92dvh;
+    border-radius: 14px;
   }
 
   .product-detail-image img {
