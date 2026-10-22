@@ -378,36 +378,41 @@ const RestaurantInfo = ({ url }) => {
   return (
     <div className="restaurant-info-page">
       <div className="page-header">
-        <div>
-          <h1>🏪 {t('ri.title')}</h1>
-          <p>{t('ri.subtitle')}</p>
+        <div className="page-header-main">
+          <div>
+            <h1>🏪 {t('ri.title')}</h1>
+            <p>{t('ri.subtitle')}</p>
+          </div>
+          <div className="header-actions">
+            <button type="button" className="btn-reset" onClick={handleReset} disabled={isSaving}>
+              ↺ {t('ri.reset')}
+            </button>
+            <button type="submit" form="restaurant-info-form" className="btn-save" disabled={isSaving}>
+              {isSaving ? `💾 ${t('ri.saving')}` : `💾 ${t('ri.saveChanges')}`}
+            </button>
+          </div>
         </div>
-        <div className="header-actions">
-          <button type="button" className="btn-reset" onClick={handleReset} disabled={isSaving}>
-            ↺ {t('ri.reset')}
-          </button>
-          <button type="submit" form="restaurant-info-form" className="btn-save" disabled={isSaving}>
-            {isSaving ? `💾 ${t('ri.saving')}` : `💾 ${t('ri.saveChanges')}`}
-          </button>
-        </div>
-      </div>
 
-      <div className="tabs">
-        {[
-          { key: 'basic', icon: '📝', label: t('ri.basicInfo') },
-          { key: 'branding', icon: '🎨', label: 'Branding' },
-          { key: 'hours', icon: '🕐', label: t('ri.openingHours') },
-          { key: 'social', icon: '📱', label: t('ri.socialMedia') },
-          { key: 'translations', icon: '🌍', label: t('ri.translations') }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            className={`tab ${activeTab === tab.key ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
+        <div className="tabs" role="tablist">
+          {[
+            { key: 'basic', icon: '📝', label: t('ri.basicInfo') },
+            { key: 'branding', icon: '🎨', label: 'Branding' },
+            { key: 'hours', icon: '🕐', label: t('ri.openingHours') },
+            { key: 'social', icon: '📱', label: t('ri.socialMedia') },
+            { key: 'translations', icon: '🌍', label: t('ri.translations') }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`tab ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <form id="restaurant-info-form" onSubmit={handleSubmit}>
