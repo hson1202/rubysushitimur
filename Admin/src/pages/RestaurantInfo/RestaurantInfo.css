@@ -136,21 +136,37 @@
   font-size: 0.95rem;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.restaurant-info-page .form-group input:not([type="checkbox"]):not([type="file"]),
+.restaurant-info-page .form-group textarea,
+.restaurant-info-page .form-group select,
+.restaurant-info-page .weekly-hours-row input[type="time"] {
+  display: block;
   width: 100%;
+  min-height: 44px;
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
+  background: #ffffff;
+  color: #1a1a1a;
   font-size: 0.95rem;
-  transition: all 0.3s ease;
+  line-height: 1.4;
+  opacity: 1;
+  appearance: auto;
+  -webkit-appearance: auto;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.restaurant-info-page .form-group textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.restaurant-info-page .form-group input:not([type="checkbox"]):not([type="file"]):focus,
+.restaurant-info-page .form-group textarea:focus,
+.restaurant-info-page .form-group select:focus,
+.restaurant-info-page .weekly-hours-row input[type="time"]:focus {
   outline: none;
   border-color: #FF6B6B;
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
@@ -230,8 +246,9 @@
   background: #fff;
 }
 
-.notification-email-add input {
+.restaurant-info-page .notification-email-add input:not([type="checkbox"]):not([type="file"]) {
   flex: 1;
+  width: auto;
   min-width: 0;
   margin: 0;
 }
@@ -599,14 +616,7 @@
   font-size: 0.9rem;
 }
 
-.weekly-hours-row input[type="time"] {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-}
-
-.weekly-hours-row input[type="time"]:disabled {
+.restaurant-info-page .weekly-hours-row input[type="time"]:disabled {
   background: #f3f4f6;
   color: #9ca3af;
   cursor: not-allowed;
