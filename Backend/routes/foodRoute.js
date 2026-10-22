@@ -1,5 +1,5 @@
 import express from "express"
-import { addFood, listFood, removeFood, updateFoodStatus, updateFood, updateFoodQuantity, quickUpdateFood, processOrder } from "../controllers/foodController.js"
+import { addFood, listFood, removeFood, updateFoodStatus, updateOrderBlocked, updateFood, updateFoodQuantity, quickUpdateFood, processOrder } from "../controllers/foodController.js"
 import { upload } from "../middleware/r2Upload.js"
 
 const foodRouter = express.Router();
@@ -278,6 +278,8 @@ foodRouter.delete("/remove/:id", removeFood) // DELETE /remove/:id
 foodRouter.post("/remove", removeFood) // POST /remove { id }
 foodRouter.put("/status", updateFoodStatus)
 foodRouter.put("/update-status/:id", updateFoodStatus) // Support URL param
+foodRouter.put("/order-block", updateOrderBlocked)
+foodRouter.put("/order-block/:id", updateOrderBlocked)
 foodRouter.put("/quick-update/:id", quickUpdateFood) // Quick update price/quantity
 foodRouter.put("/edit/:id", upload.single("image"), handleMulterError, updateFood)
 foodRouter.put("/quantity", updateFoodQuantity)

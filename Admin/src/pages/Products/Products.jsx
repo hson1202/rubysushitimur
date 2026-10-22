@@ -116,6 +116,8 @@ const Products = ({ url }) => {
   const [scheduleFilter, setScheduleFilter] = useState('all') // 'all' | 'weekly' | 'daily'
   // Day-of-week filter for weekly tab (null = all days, 0=Sun..6=Sat)
   const [selectedWeekDay, setSelectedWeekDay] = useState(null)
+  // Filter for order-blocked products
+  const [orderBlockedFilter, setOrderBlockedFilter] = useState(false) // true = show only blocked
   
   // Quick edit state
   const [quickEditing, setQuickEditing] = useState(null) // { productId, field: 'price' | 'quantity' }
@@ -718,6 +720,31 @@ const handleQuickEditCancel = () => {
     }
   }
 
+  const handleOrderBlockToggle = async (product) => {
+    const nextBlocked = product.orderBlocked !== true
+    try {
+      const response = await axios.put(`${config.BACKEND_URL}/api/food/order-block`, {
+        id: product._id,
+        orderBlocked: nextBlocked
+      })
+      if (response.data?.success) {
+        if (nextBlocked) {
+          toast.success(t('products.blockOrderSuccess'))
+        } else if (Number(product.quantity) <= 0) {
+          toast.success(t('products.unblockOrderZeroStock'))
+        } else {
+          toast.success(t('products.unblockOrderSuccess'))
+        }
+        fetchFoodList(false, undefined, true)
+      } else {
+        toast.error(t('products.blockOrderError'))
+      }
+    } catch (error) {
+      console.error('Error updating order block:', error)
+      toast.error(t('products.blockOrderError'))
+    }
+  }
+
   const handleAddProduct = async (e) => {
     e.preventDefault()
     
@@ -1194,7 +1221,14 @@ const handleQuickEditCancel = () => {
     } else if (scheduleFilter === 'daily') {
       list = list.filter(p => p.dailyAvailability?.enabled === true);
     }
+    // Order blocked filter
+    if (orderBlockedFilter) {
+      list = list.filter(p => p.orderBlocked === true);
+    }
     return list.sort((a, b) => {
+      // Ưu tiên món bị block lên đầu
+      if (a.orderBlocked && !b.orderBlocked) return -1;
+      if (!a.orderBlocked && b.orderBlocked) return 1;
       const qa = Number(a.quantity) || 0;
       const qb = Number(b.quantity) || 0;
       if (qa === 0 && qb !== 0) return -1;
@@ -1203,7 +1237,7 @@ const handleQuickEditCancel = () => {
       if (qb <= 5 && qa > 5) return 1;
       return (a.name || '').localeCompare(b.name || '');
     });
-  }, [foodList, scheduleFilter, selectedWeekDay]);
+  }, [foodList, scheduleFilter, selectedWeekDay, orderBlockedFilter]);
 
   const getStatusBadge = (status) => {
     if (!status) {
@@ -2319,7 +2353,7 @@ const handleQuickEditCancel = () => {
       <div className="status-filter-tabs">
         <button
           className={`status-tab ${statusFilter === 'all' && scheduleFilter === 'all' ? 'active' : ''}`}
-          onClick={() => { setStatusFilter('all'); setScheduleFilter('all'); }}
+          onClick={() => { setStatusFilter('all'); setScheduleFilter('all'); setOrderBlockedFilter(false); }}
         >
           <span className="tab-icon">📦</span>
           All Products
@@ -2327,7 +2361,7 @@ const handleQuickEditCancel = () => {
         </button>
         <button
           className={`status-tab ${statusFilter === 'active' ? 'active' : ''}`}
-          onClick={() => { setStatusFilter('active'); setScheduleFilter('all'); }}
+          onClick={() => { setStatusFilter('active'); setScheduleFilter('all'); setOrderBlockedFilter(false); }}
         >
           <span className="tab-icon">✅</span>
           Active
@@ -2338,7 +2372,7 @@ const handleQuickEditCancel = () => {
         </button>
         <button
           className={`status-tab ${statusFilter === 'inactive' ? 'active' : ''}`}
-          onClick={() => { setStatusFilter('inactive'); setScheduleFilter('all'); }}
+          onClick={() => { setStatusFilter('inactive'); setScheduleFilter('all'); setOrderBlockedFilter(false); }}
         >
           <span className="tab-icon">⏸️</span>
           Inactive
@@ -2348,8 +2382,20 @@ const handleQuickEditCancel = () => {
           }).length})</span>
         </button>
         <button
+          className={`status-tab ${orderBlockedFilter ? 'active blocked-tab' : 'blocked-tab'}`}
+          onClick={() => {
+            setOrderBlockedFilter(prev => !prev);
+            if (!orderBlockedFilter) { setScheduleFilter('all'); }
+          }}
+          title="Hiển thị các món đang bị tắt đặt hàng (Hết món)"
+        >
+          <span className="tab-icon">🚫</span>
+          Hết Món
+          <span className="tab-count">({foodList.filter(p => p.orderBlocked === true).length})</span>
+        </button>
+        <button
           className={`status-tab ${scheduleFilter === 'weekly' ? 'active schedule-tab' : 'schedule-tab'}`}
-          onClick={() => { setScheduleFilter('weekly'); setStatusFilter('all'); setSelectedWeekDay(null); }}
+          onClick={() => { setScheduleFilter('weekly'); setStatusFilter('all'); setSelectedWeekDay(null); setOrderBlockedFilter(false); }}
           title="Hiển thị sản phẩm có lịch theo tuần (Weekly Schedule)"
         >
           <span className="tab-icon">📅</span>
@@ -2358,7 +2404,7 @@ const handleQuickEditCancel = () => {
         </button>
         <button
           className={`status-tab ${scheduleFilter === 'daily' ? 'active schedule-tab' : 'schedule-tab'}`}
-          onClick={() => { setScheduleFilter('daily'); setStatusFilter('all'); setSelectedWeekDay(null); }}
+          onClick={() => { setScheduleFilter('daily'); setStatusFilter('all'); setSelectedWeekDay(null); setOrderBlockedFilter(false); }}
           title="Hiển thị sản phẩm có giờ phục vụ hàng ngày (Daily Availability)"
         >
           <span className="tab-icon">🕐</span>
@@ -2530,7 +2576,7 @@ const handleQuickEditCancel = () => {
                 console.log(`DEBUG - Rendering test product: ${product.name}, status: "${product.status}", filter: ${statusFilter}`)
               }
             return (
-              <div key={product._id} className={`product-card ${selectedProducts.includes(product._id) ? 'selected' : ''}`}>
+              <div key={product._id} className={`product-card ${selectedProducts.includes(product._id) ? 'selected' : ''} ${product.orderBlocked ? 'order-blocked' : ''}`}>
                 <div className="product-select-checkbox">
                   <input
                     type="checkbox"
@@ -2556,10 +2602,10 @@ const handleQuickEditCancel = () => {
                     style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                   />
                   <div className="product-overlay">
-                    {(product.quantity || 0) === 0 && (
+                    {((product.quantity || 0) === 0 || product.orderBlocked) && (
                       <div className="out-of-stock-badge">
                         <span className="out-of-stock-icon">🚫</span>
-                        Out of Stock
+                        {t('products.orderBlockedBadge')}
                       </div>
                     )}
                   </div>
@@ -2569,6 +2615,9 @@ const handleQuickEditCancel = () => {
                     <h3>{product.name || product.nameVI || product.nameEN || product.nameHU || 'Unnamed Product'}</h3>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
                       <span className="product-sku">SKU: {product.sku || 'N/A'}</span>
+                      {product.orderBlocked && (
+                        <span style={{ fontSize: '11px', background: '#fef2f2', color: '#dc2626', borderRadius: '4px', padding: '1px 6px', fontWeight: 700, border: '1px solid #fca5a5', letterSpacing: '0.3px' }}>🚫 Hết món</span>
+                      )}
                       {product.weeklySchedule?.enabled && (
                         <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px', padding: '1px 6px', fontWeight: 600 }}>📅 Menu Tuần</span>
                       )}
@@ -2680,6 +2729,14 @@ const handleQuickEditCancel = () => {
                     )}
                   </div>
                   <div className="product-actions">
+                    <button
+                      type="button"
+                      onClick={() => handleOrderBlockToggle(product)}
+                      className={`btn-block-order ${product.orderBlocked ? 'is-blocked' : ''}`}
+                      title={product.orderBlocked ? t('products.unblockOrder') : t('products.blockOrder')}
+                    >
+                      {product.orderBlocked ? t('products.unblockOrder') : t('products.blockOrder')}
+                    </button>
                     <button
                       onClick={() => handleEditProduct(product)}
                       className="btn-edit"

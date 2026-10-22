@@ -4,6 +4,7 @@ import config from "../config/config"
 import i18n from "../i18n"
 import { getRestaurantStatus, normalizeWeeklyHours, isRestaurantOpen } from "../utils/restaurantHours"
 import { setActiveRestaurantTimeZone } from "../utils/timeZone"
+import { dishDisplayName, isDishOrderBlocked } from "../utils/orderAvailability"
 
 export const CART_ITEMS_KEY = "ruby_cart_items"
 export const CART_DATA_KEY = "ruby_cart_items_data"
@@ -67,6 +68,24 @@ const StoreContextProvider =(props)=>{
                 const status = getRestaurantStatus(weeklyHours, lang);
                 window.alert(status.message || 'Restaurant is closed');
                 return false;
+            }
+        }
+
+        const productId = String(itemId).split('_')[0]
+        const liveProduct = food_list.find((product) => String(product._id) === productId)
+        const source = liveProduct || itemData
+        if (source && isDishOrderBlocked(source)) {
+            window.alert(i18n.t('food.cannotOrder', { name: dishDisplayName(source) }))
+            return false
+        }
+        if (liveProduct && Number.isFinite(Number(liveProduct.quantity))) {
+            const inCart = Object.entries(cartItems).reduce((sum, [key, qty]) => {
+                if (String(key).split('_')[0] !== productId) return sum
+                return sum + (Number(qty) || 0)
+            }, 0)
+            if (inCart + 1 > Number(liveProduct.quantity)) {
+                window.alert(i18n.t('food.cannotOrder', { name: dishDisplayName(liveProduct) }))
+                return false
             }
         }
 

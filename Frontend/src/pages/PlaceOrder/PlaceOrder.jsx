@@ -11,6 +11,7 @@ import DeliveryZoneDisplay from '../../components/DeliveryZoneDisplay/DeliveryZo
 import '../../i18n'
 import { formatHuf } from '../../utils/currency'
 import { generateOrderTimeSlots, normalizeWeeklyHours } from '../../utils/restaurantHours'
+import { findUnavailableCartItems } from '../../utils/orderAvailability'
 
 const EMPTY_CONTACT = {
   firstName: "",
@@ -372,6 +373,15 @@ const PlaceOrder = () => {
       return;
     }
 
+    const unavailableItems = findUnavailableCartItems(cartItems, food_list)
+    if (unavailableItems.length > 0) {
+      alert(t('placeOrder.errors.itemUnavailable', {
+        names: unavailableItems.map((item) => item.name).join(', ')
+      }))
+      setIsSubmitting(false)
+      return
+    }
+
     // Tạo thông tin khách hàng
     const customerInfo = {
       name: `${data.firstName} ${data.lastName}`,
@@ -535,6 +545,9 @@ const PlaceOrder = () => {
           errorMessage = t('placeOrder.form.geocodeUnavailable');
         } else if (errorCode === 'DELIVERY_UNAVAILABLE') {
           errorMessage = t('placeOrder.errors.deliveryZoneNotAvailable');
+        } else if (errorCode === 'ITEM_UNAVAILABLE') {
+          const names = (error.response.data?.unavailableItems || []).map((item) => item.name).filter(Boolean).join(', ')
+          errorMessage = t('placeOrder.errors.itemUnavailable', { names })
         } else {
           errorMessage = status >= 500
             ? t('placeOrder.errors.serverError', { status })

@@ -20,6 +20,7 @@ const foodSchema = new mongoose.Schema({
   promotionPrice: { type: Number },
   soldCount: { type: Number, default: 0, min: 0 },
   status: { type: String, enum: ["active", "inactive"], default: "active" },
+  orderBlocked: { type: Boolean, default: false },
   disableBoxFee: { type: Boolean, default: false }, // Tắt tiền hộp (0.3E) cho sản phẩm này
   isRecommended: { type: Boolean, default: false }, // Đánh dấu sản phẩm được recommend trong cart
   recommendPriority: { type: Number, default: 999 }, // Priority cho recommendations (số nhỏ hơn = ưu tiên cao hơn)

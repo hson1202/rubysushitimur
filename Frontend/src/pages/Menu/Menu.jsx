@@ -390,6 +390,8 @@ const Menu = () => {
                         availableTo={food.availableTo}
                         dailyAvailability={food.dailyAvailability}
                         weeklySchedule={food.weeklySchedule}
+                        quantity={food.quantity}
+                        orderBlocked={food.orderBlocked}
                         onViewDetails={handleViewDetails}
                         compact={true}
                       />

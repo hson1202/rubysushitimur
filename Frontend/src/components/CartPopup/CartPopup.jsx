@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { formatHuf } from '../../utils/currency'
 import { formatProductDisplayName } from '../../utils/productDisplay'
+import { isDishOrderBlocked } from '../../utils/orderAvailability'
 
 // ---- Pricing helpers ----
 const hasOverrideOpt = (product) =>
@@ -204,6 +205,7 @@ const CartPopup = ({ onClose }) => {
       .filter(item => !cartItemIds.includes(item._id))
       .filter(item => item.isRecommended === true)
       .filter(item => item.status === 'active')
+      .filter(item => !isDishOrderBlocked(item))
       .sort((a, b) => {
         // Sort by priority (số nhỏ hơn = ưu tiên cao hơn)
         const priorityA = a.recommendPriority || 999
@@ -238,6 +240,7 @@ const CartPopup = ({ onClose }) => {
           return false
         })
         .filter(item => item.status === 'active')
+        .filter(item => !isDishOrderBlocked(item))
         .sort((a, b) => {
           // Prioritize promoted items and popular items
           if (a.isPromotion && !b.isPromotion) return -1
@@ -307,7 +310,10 @@ const CartPopup = ({ onClose }) => {
                 <div className="cart-items-section">
                   <h3>{t('cart.items')} ({cartItemsList.length})</h3>
                   <div className="cart-items-list">
-                    {cartItemsList.map((item) => (
+                    {cartItemsList.map((item) => {
+                      const liveProduct = food_list.find((product) => product._id === String(item.cartItemId).split('_')[0])
+                      const soldOut = food_list.length > 0 && (!liveProduct || isDishOrderBlocked(liveProduct))
+                      return (
                       <div key={item.cartItemId} className="cart-item">
                         <div className="cart-item-image food-image-container">
                           {(() => {
@@ -325,6 +331,7 @@ const CartPopup = ({ onClose }) => {
                         </div>
                         <div className="cart-item-info">
                           <h4>{getDisplayName(item)}</h4>
+                          {soldOut && <p className="cart-item-soldout">{t('food.soldOut')}</p>}
                           {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
                             <div className="cart-item-options">
                               <span className="options-text">{formatSelectedOptions(item)}</span>
@@ -337,7 +344,11 @@ const CartPopup = ({ onClose }) => {
                               <img src={assets.remove_icon_red} alt="" />
                             </button>
                             <span className="quantity">{item.quantity}</span>
-                            <button onClick={() => addToCart(item.cartItemId, item)}>
+                            <button
+                              onClick={() => addToCart(item.cartItemId, item)}
+                              disabled={soldOut}
+                              aria-label={t('food.increase')}
+                            >
                               <img src={assets.add_icon_green} alt="" />
                             </button>
                           </div>
@@ -358,7 +369,8 @@ const CartPopup = ({ onClose }) => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 

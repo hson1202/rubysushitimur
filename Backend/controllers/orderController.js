@@ -1,5 +1,7 @@
+import mongoose from "mongoose"
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js"
+import foodModel from "../models/foodModel.js"
 import RestaurantInfo from "../models/restaurantInfoModel.js"
 import { sendOrderConfirmation, sendAdminOrderNotification } from "../services/emailService.js"
 import eventBus from "../services/eventBus.js"
@@ -10,6 +12,44 @@ import { resolveDelivery } from "../utils/deliveryCalculator.js"
 
 // Mã bưu điện Hungary luôn gồm đúng 4 chữ số (ví dụ: 1061)
 const HU_ZIPCODE_REGEX = /^\d{4}$/;
+
+const foodDisplayName = (food, fallback) =>
+    food?.nameVI || food?.name || food?.nameEN || food?.nameHU || fallback
+
+const findUnavailableOrderItems = async (items) => {
+    const requested = new Map()
+    for (const item of items) {
+        const rawId = item?._id || item?.id
+        const productId = rawId ? String(rawId._id || rawId).split('_')[0] : ''
+        const qty = Number(item?.quantity) || 0
+        if (!productId || qty <= 0) continue
+        requested.set(productId, (requested.get(productId) || 0) + qty)
+    }
+
+    const validIds = [...requested.keys()].filter((id) => mongoose.Types.ObjectId.isValid(id))
+    const foods = validIds.length
+        ? await foodModel.find({ _id: { $in: validIds } })
+            .select('name nameVI nameEN nameHU quantity status orderBlocked')
+            .lean()
+        : []
+    const foodMap = new Map(foods.map((food) => [String(food._id), food]))
+
+    const unavailable = []
+    for (const [productId, qty] of requested) {
+        const food = foodMap.get(productId)
+        const blocked = !food
+            || food.orderBlocked === true
+            || food.status === 'inactive'
+            || !(Number(food.quantity) >= qty)
+        if (blocked) {
+            unavailable.push({
+                id: productId,
+                name: foodDisplayName(food, productId)
+            })
+        }
+    }
+    return unavailable
+}
 
 // placing user order from frontend (hỗ trợ cả đăng nhập và không đăng nhập)
 const placeOrder = async (req, res) => {
@@ -167,6 +207,17 @@ const placeOrder = async (req, res) => {
             }
             return item;
         });
+
+        const unavailableItems = await findUnavailableOrderItems(processedItems)
+        if (unavailableItems.length > 0) {
+            const names = unavailableItems.map((item) => item.name).join(', ')
+            return res.status(400).json({
+                success: false,
+                code: 'ITEM_UNAVAILABLE',
+                message: `Không thể đặt các món đã hết hoặc bị chặn: ${names}`,
+                unavailableItems
+            })
+        }
 
         // ========================================
         // ✅ SERVER-SIDE DELIVERY + PRICE VALIDATION

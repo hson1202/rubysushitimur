@@ -7,12 +7,13 @@ import { isFoodAvailable, getAvailabilityStatus } from '../../utils/timeUtils'
 import { normalizeAllergens, getAllergenInfo } from '../../utils/allergens'
 import { formatHuf } from '../../utils/currency'
 import { formatProductDisplayName, getLocalizedDescription } from '../../utils/productDisplay'
+import { isDishOrderBlocked } from '../../utils/orderAvailability'
 import LazyImage from '../LazyImage/LazyImage'
 import { useInViewOnce } from '../../hooks/useIntersectionObserver'
 
 const FOOD_ITEM_IN_VIEW_OPTIONS = { rootMargin: '60px' }
 
-const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descriptionVI, descriptionEN, descriptionHU, image, sku, isPromotion, originalPrice, promotionPrice, soldCount = 0, likes = 0, options, portion, allergens, onViewDetails, compact = false, availableFrom, availableTo, dailyAvailability, weeklySchedule}) => {
+const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descriptionVI, descriptionEN, descriptionHU, image, sku, isPromotion, originalPrice, promotionPrice, soldCount = 0, likes = 0, options, portion, allergens, onViewDetails, compact = false, availableFrom, availableTo, dailyAvailability, weeklySchedule, quantity, orderBlocked = false}) => {
   const {cartItems, addToCart, removeFromCart, url} = useContext(StoreContext);
   const { i18n, t } = useTranslation();
   
@@ -27,6 +28,8 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
   const foodData = { availableFrom, availableTo, dailyAvailability, weeklySchedule };
   const isAvailable = isFoodAvailable(foodData);
   const availabilityInfo = getAvailabilityStatus(foodData, currentLanguage);
+  const orderingBlocked = isDishOrderBlocked({ quantity, orderBlocked, status: 'active' });
+  const canAdd = isAvailable && !orderingBlocked;
   
   // Function to get the appropriate name based on current language
   const getLocalizedName = () => {
@@ -150,10 +153,12 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
       options,
       portion,
       allergens,
+      quantity,
+      orderBlocked,
       status: 'active',
       language: 'vi'
     });
-  }, [id, name, nameVI, nameEN, nameHU, description, descriptionVI, descriptionEN, descriptionHU, price, image, sku, isPromotion, originalPrice, promotionPrice, soldCount, likes, options, portion, allergens, onViewDetails]);
+  }, [id, name, nameVI, nameEN, nameHU, description, descriptionVI, descriptionEN, descriptionHU, price, image, sku, isPromotion, originalPrice, promotionPrice, soldCount, likes, options, portion, allergens, quantity, orderBlocked, onViewDetails]);
 
   const titleRef = useRef(null);
   const descriptionRef = useRef(null);
@@ -207,7 +212,7 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
 
   const currentPrice = isPromotion && promotionPrice ? promotionPrice : price;
 
-  const itemClassName = `food-item${compact ? ' compact' : ''}${isInView ? ' in-view' : ''}`;
+  const itemClassName = `food-item${compact ? ' compact' : ''}${isInView ? ' in-view' : ''}${orderingBlocked ? ' is-sold-out' : ''}`;
 
   if (compact) {
     return (
@@ -246,12 +251,14 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
             </div>
           </div>
           <div className="compact-controls" onClick={(e) => e.stopPropagation()}>
-            {!cartItems[id] ? (
+            {orderingBlocked ? (
+              <span className="sold-out-label">{t('food.soldOut')}</span>
+            ) : !cartItems[id] ? (
               <button 
                 className="add-compact"
                 aria-label={t('food.addToCart')}
                 onClick={() => addToCart(id)}
-                disabled={!isAvailable}
+                disabled={!canAdd}
               >
                 +
               </button>
@@ -261,7 +268,7 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
                   −
                 </button>
                 <span className="quantity-small">{cartItems[id]}</span>
-                <button className="qty-btn-small" onClick={() => addToCart(id)} aria-label={t('food.increase')} disabled={!isAvailable}>
+                <button className="qty-btn-small" onClick={() => addToCart(id)} aria-label={t('food.increase')} disabled={!canAdd}>
                   +
                 </button>
               </div>
@@ -306,10 +313,11 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
           </div>
         )}
 
-        {/* Unavailable Overlay */}
-        {!isAvailable && (
+        {(orderingBlocked || !isAvailable) && (
           <div className="unavailable-overlay">
-            <span className="unavailable-text">{availabilityInfo.message}</span>
+            <span className="unavailable-text">
+              {orderingBlocked ? t('food.soldOut') : availabilityInfo.message}
+            </span>
           </div>
         )}
       </div>
@@ -356,13 +364,13 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
           {getPriceDisplay()}
         </div>
         
-        {/* Bottom quantity controls */}
+        {!orderingBlocked && (
         <div className="food-item-actions" onClick={(e) => e.stopPropagation()}>
           {!cartItems[id] ? (
             <button 
               className="add-to-cart-btn"
               onClick={() => addToCart(id)}
-              disabled={!isAvailable}
+              disabled={!canAdd}
             >
               {t('food.addToCart')}
             </button>
@@ -372,12 +380,13 @@ const FoodItem = ({id, name, nameVI, nameEN, nameHU, price, description, descrip
                 <img src={assets.remove_icon_red} alt="" />
               </button>
               <span className="quantity">{cartItems[id]}</span>
-              <button className="qty-btn" onClick={() => addToCart(id)} disabled={!isAvailable}>
+              <button className="qty-btn" onClick={() => addToCart(id)} disabled={!canAdd}>
                 <img src={assets.add_icon_green} alt="" />
               </button>
             </div>
           )}
         </div>
+        )}
       </div>  
     </div>
   )

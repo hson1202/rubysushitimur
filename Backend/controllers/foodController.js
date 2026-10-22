@@ -362,6 +362,38 @@ const updateFoodStatus = async (req, res) => {
   }
 }
 
+const updateOrderBlocked = async (req, res) => {
+  try {
+    const id = req.params.id || req.body.id
+    const { orderBlocked } = req.body
+    const blocked = orderBlocked === true || orderBlocked === 'true'
+    const unblocked = orderBlocked === false || orderBlocked === 'false'
+
+    if (!id || (!blocked && !unblocked)) {
+      return res.status(400).json({ success: false, message: "ID and orderBlocked are required" })
+    }
+
+    const updatedFood = await foodModel.findByIdAndUpdate(
+      id,
+      { orderBlocked: blocked },
+      { new: true, runValidators: true }
+    )
+
+    if (!updatedFood) {
+      return res.status(404).json({ success: false, message: "Food not found" })
+    }
+
+    res.json({
+      success: true,
+      message: blocked ? "Ordering blocked" : "Ordering enabled",
+      data: updatedFood
+    })
+  } catch (error) {
+    console.error('UPDATE ORDER BLOCK ERROR:', error)
+    res.status(500).json({ success: false, message: "Internal server error" })
+  }
+}
+
 //update food item (edit product)
 const updateFood = async (req, res) => {
   try {
@@ -752,4 +784,4 @@ const processOrder = async (req, res) => {
   }
 }
 
-export { addFood, listFood, removeFood, updateFoodStatus, updateFood, updateFoodQuantity, quickUpdateFood, processOrder }
+export { addFood, listFood, removeFood, updateFoodStatus, updateOrderBlocked, updateFood, updateFoodQuantity, quickUpdateFood, processOrder }

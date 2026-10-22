@@ -366,6 +366,35 @@
   background: #fee2e2;
 }
 
+.products-page .btn-block-order {
+  background: #fff7ed;
+  color: #c2410c;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.products-page .btn-block-order:hover {
+  background: #ffedd5;
+}
+
+.products-page .btn-block-order.is-blocked {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.products-page .btn-block-order.is-blocked:hover {
+  background: #d1fae5;
+}
+
+.product-card.order-blocked {
+  border-color: #fdba74;
+}
+
 .products-page .btn-primary {
   padding: 10px 20px;
   background: var(--color-primary);
@@ -458,6 +487,27 @@
 
 .status-tab.active .tab-count {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Blocked tab – màu đỏ nhạt */
+.status-tab.blocked-tab {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1.5px solid #feb2b2;
+}
+
+.status-tab.blocked-tab:hover {
+  background: #fed7d7;
+}
+
+.status-tab.blocked-tab.active {
+  background: #e53e3e;
+  color: white;
+  border-color: #e53e3e;
+}
+
+.status-tab.blocked-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Filters */
@@ -836,7 +886,8 @@
 }
 
 .product-actions .btn-edit,
-.product-actions .btn-delete {
+.product-actions .btn-delete,
+.product-actions .btn-block-order {
   flex: 1;
   text-align: center;
 }
@@ -1164,7 +1215,8 @@
   }
 
   .product-actions .btn-edit,
-  .product-actions .btn-delete {
+  .product-actions .btn-delete,
+  .product-actions .btn-block-order {
     width: 100%;
     padding: 10px 14px;
     font-size: 13px;
@@ -1269,7 +1321,8 @@
   }
 
   .product-actions .btn-edit,
-  .product-actions .btn-delete {
+  .product-actions .btn-delete,
+  .product-actions .btn-block-order {
     padding: 5px 8px;
     font-size: 11px;
   }

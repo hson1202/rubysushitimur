@@ -141,6 +141,13 @@
     background: var(--brand-accent-hover);
 }
 
+.add-to-cart-btn:disabled,
+.add-to-cart-btn.sold-out {
+    background: #6b7280;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
 .quantity-controls-bottom {
     display: flex;
     align-items: center;
@@ -486,6 +493,27 @@
     opacity: 0.35;
     pointer-events: none;
     box-shadow: none;
+}
+
+.sold-out-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #7f1d1d;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.food-item.is-sold-out {
+    opacity: 0.78;
 }
 
 /* Qty stepper — vertical */

@@ -198,6 +198,8 @@ const TodaySpecialMenu = () => {
                 availableTo={item.availableTo}
                 dailyAvailability={item.dailyAvailability}
                 weeklySchedule={item.weeklySchedule}
+                quantity={item.quantity}
+                orderBlocked={item.orderBlocked}
                 onViewDetails={handleViewDetails}
                 compact={false}
               />

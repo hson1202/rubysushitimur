@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { normalizeAllergens, getAllergenInfo } from '../../utils/allergens'
 import { formatHuf } from '../../utils/currency'
 import { formatProductDisplayName, getLocalizedDescription } from '../../utils/productDisplay'
+import { isDishOrderBlocked } from '../../utils/orderAvailability'
 
 // ---- Pricing helpers ----
 const hasOverrideOpt = (product) =>
@@ -194,9 +195,10 @@ const ProductDetail = ({ product, onClose }) => {
   }
 
   const isRestaurantClosed = restaurantOpenStatus && !restaurantOpenStatus.isOpen
+  const orderingBlocked = isDishOrderBlocked(product)
 
   const handleAddToCart = () => {
-    if (isRestaurantClosed) return
+    if (isRestaurantClosed || orderingBlocked) return
     // Create a unique cart key that includes selected options
     const cartKey = product.options && product.options.length > 0 
       ? `${product._id}_${JSON.stringify(selectedOptions)}`
@@ -424,8 +426,10 @@ const ProductDetail = ({ product, onClose }) => {
                 <div className="info-grid">
                   <div className="info-item">
                     <span className="info-label">{t('productDetail.status')}:</span>
-                    <span className={`info-value status-${product.status}`}>
-                      {product.status === 'active' ? t('productDetail.available') : t('productDetail.unavailable')}
+                    <span className={`info-value status-${orderingBlocked ? 'inactive' : product.status}`}>
+                      {orderingBlocked
+                        ? t('food.soldOut')
+                        : (product.status === 'active' ? t('productDetail.available') : t('productDetail.unavailable'))}
                     </span>
                   </div>
                 </div>
@@ -442,7 +446,11 @@ const ProductDetail = ({ product, onClose }) => {
           </div>
 
           <div className="footer-actions">
-            {getCartQuantity() === 0 ? (
+            {orderingBlocked && getCartQuantity() === 0 ? (
+              <button type="button" className="footer-add-to-cart-btn" disabled>
+                {t('food.soldOut')}
+              </button>
+            ) : getCartQuantity() === 0 ? (
               <button 
                 className="footer-add-to-cart-btn"
                 onClick={handleAddToCart}
@@ -466,6 +474,7 @@ const ProductDetail = ({ product, onClose }) => {
                   className="qty-btn increase"
                   onClick={handleIncreaseQuantity}
                   aria-label={t('food.increase')}
+                  disabled={orderingBlocked || isRestaurantClosed}
                 >
                   +
                 </button>
@@ -522,6 +531,8 @@ ProductDetail.propTypes = {
     disableBoxFee: PropTypes.oneOfType([PropTypes.bool, PropTypes.string, PropTypes.number]),
     sku: PropTypes.string,
     status: PropTypes.string,
+    quantity: PropTypes.number,
+    orderBlocked: PropTypes.bool,
     likes: PropTypes.number,
     soldCount: PropTypes.number,
     portion: PropTypes.string,
